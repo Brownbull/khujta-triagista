@@ -76,7 +76,11 @@ async def incident_detail_page(
     """Incident detail page."""
     query = (
         select(Incident)
-        .options(selectinload(Incident.attachments))
+        .options(
+            selectinload(Incident.attachments),
+            selectinload(Incident.ticket),
+            selectinload(Incident.notifications),
+        )
         .where(Incident.id == incident_id)
     )
     result = await db.execute(query)

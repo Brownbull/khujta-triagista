@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.database import get_db
 from app.models.incident import Incident, IncidentAttachment, IncidentStatus
+from app.pipeline.dispatch import dispatch_incident
 from app.pipeline.triage import run_triage
 from app.schemas.incident import IncidentCreate, IncidentListResponse, IncidentResponse
 from app.services.codebase_indexer import CodebaseIndex
@@ -214,15 +215,21 @@ async def triage_incident(
     incident.related_files = triage_result.related_files
     incident.status = IncidentStatus.DISPATCHED
 
-    await db.commit()
+    await db.flush()
+
+    # Auto-dispatch: create ticket + notifications
+    dispatch_result = await dispatch_incident(incident, db)
+
     await db.refresh(incident)
     await db.refresh(incident, attribute_names=["attachments"])
 
     logger.info(
-        "Triage complete for %s: severity=%s, confidence=%.2f, tokens=%d/%d",
+        "Triage+dispatch complete for %s: severity=%s, confidence=%.2f, "
+        "ticket=%s, tokens=%d/%d",
         incident_id,
         triage_result.severity,
         triage_result.confidence,
+        dispatch_result.ticket_id,
         triage_result.tokens_in,
         triage_result.tokens_out,
     )
