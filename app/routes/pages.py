@@ -76,43 +76,25 @@ async def incident_search_page(
     q: str = "",
     db: AsyncSession = Depends(get_db),
 ):
-    """Search incidents by ID or keyword."""
+    """Search incidents by partial ID (first 1-8 chars of UUID)."""
+    from sqlalchemy import cast, String
+
     incidents = []
-    q = q.strip()
+    # Sanitize: strip, remove spaces, cap at 8 chars, alphanumeric only
+    q = "".join(c for c in q.strip() if c.isalnum() or c == "-")[:8]
 
     if q:
-        # Try UUID lookup first
-        try:
-            search_id = uuid.UUID(q)
-            query = (
-                select(Incident)
-                .options(selectinload(Incident.attachments))
-                .where(Incident.id == search_id)
-            )
-            result = await db.execute(query)
-            found = result.scalar_one_or_none()
-            if found:
-                incidents = [found]
-        except ValueError:
-            pass
-
-        # If not a UUID or not found, search by description/email
-        if not incidents:
-            pattern = f"%{q}%"
-            query = (
-                select(Incident)
-                .options(selectinload(Incident.attachments))
-                .where(
-                    Incident.description.ilike(pattern)
-                    | Incident.reporter_email.ilike(pattern)
-                    | Incident.category.ilike(pattern)
-                    | Incident.affected_component.ilike(pattern)
-                )
-                .order_by(Incident.created_at.desc())
-                .limit(50)
-            )
-            result = await db.execute(query)
-            incidents = list(result.scalars().all())
+        # Search by partial UUID (cast to text and ILIKE)
+        pattern = f"{q}%"
+        query = (
+            select(Incident)
+            .options(selectinload(Incident.attachments))
+            .where(cast(Incident.id, String).ilike(pattern))
+            .order_by(Incident.created_at.desc())
+            .limit(20)
+        )
+        result = await db.execute(query)
+        incidents = list(result.scalars().all())
 
     return templates.TemplateResponse(
         request,

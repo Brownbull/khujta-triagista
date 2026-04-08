@@ -3,10 +3,11 @@
 {% block title %}Incident {{ incident.id | string | truncate(8, True, '') }} — SRE Triage Agent{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <a href="/incidents" class="btn btn-ghost">&#8592; Back</a>
-    <h1>
-        Incident
+<!-- Sticky incident header -->
+<div class="incident-header-sticky">
+    <div class="container incident-header-inner">
+        <a href="/incidents" class="btn btn-ghost btn-sm">&#8592; Back</a>
+        <code class="incident-id-large">INC-{{ incident.id | string | truncate(8, True, '') }}</code>
         <span class="status-badge status-{{ incident.status.value }}">{{ incident.status.value }}</span>
         {% if incident.severity %}
         <span class="severity-badge severity-{{ incident.severity.value }}">{{ incident.severity.value }}</span>
@@ -14,7 +15,7 @@
         {% if incident.suggested_assignee %}
         {{ team_pill(incident.suggested_assignee) }}
         {% endif %}
-    </h1>
+    </div>
 </div>
 
 <!-- Report -->
