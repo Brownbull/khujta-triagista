@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import engine
 from app.models import Base
+from app.routes.incidents import router as incidents_api_router
+from app.routes.pages import router as pages_router
 
 
 @asynccontextmanager
@@ -30,12 +32,13 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# API routes
+app.include_router(incidents_api_router)
+
+# HTML page routes (must come after API so /api/incidents takes priority)
+app.include_router(pages_router)
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "sre-triage-agent"}
-
-
-@app.get("/")
-async def root():
-    return {"message": "SRE Triage Agent", "docs": "/docs"}

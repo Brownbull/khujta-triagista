@@ -18,6 +18,20 @@ AI-powered SRE Incident Intake & Triage Agent for the AgentX Hackathon (April 7-
 - **Demo**: Max 3-minute YouTube video
 - **Target codebase**: Solidus (~30K LOC Rails e-commerce)
 
+## Local Ports (ECC fork)
+
+This fork uses offset ports to avoid conflicts with parallel sessions:
+
+| Service      | Host Port | Container Port | URL                        |
+|-------------|-----------|----------------|----------------------------|
+| App (FastAPI)| **8100**  | 8000           | http://localhost:8100       |
+| PostgreSQL   | **5433**  | 5432           | localhost:5433              |
+| Redis        | **6380**  | 6379           | localhost:6380              |
+| Langfuse     | **3100**  | 3000           | http://localhost:3100       |
+| Langfuse DB  | (internal)| 5432           | (no host port)             |
+
+**Testing**: `docker compose exec app pytest tests/ -v`
+
 ## Workflow
 
 This project uses **ECC (Everything Claude Code)** for workflow management. Key commands:

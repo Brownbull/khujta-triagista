@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Incident {{ incident.id | string | truncate(8, True, '') }} — SRE Triage Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="/incidents" class="btn btn-secondary">&larr; Back</a>
+    <h1>
+        Incident
+        <span class="status-badge status-{{ incident.status.value }}">{{ incident.status.value }}</span>
+        {% if incident.severity %}
+        <span class="severity-badge severity-{{ incident.severity.value }}">{{ incident.severity.value }}</span>
+        {% endif %}
+    </h1>
+</div>
+
+<div class="detail-grid">
+    <!-- Left column: incident info -->
+    <div class="detail-card">
+        <h2>Report</h2>
+        <div class="detail-meta">
+            <span><strong>Reporter:</strong> {{ incident.reporter_email }}{% if incident.reporter_name %} ({{ incident.reporter_name }}){% endif %}</span>
+            <span><strong>Created:</strong> {{ incident.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+            <span><strong>Updated:</strong> {{ incident.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+        </div>
+        <div class="description-block">
+            {{ incident.description }}
+        </div>
+
+        {% if incident.attachments %}
+        <h3>Attachments ({{ incident.attachments | length }})</h3>
+        <ul class="attachment-list">
+            {% for att in incident.attachments %}
+            <li>
+                <span class="attachment-icon">&#128206;</span>
+                {{ att.filename }}
+                <small>({{ (att.file_size / 1024) | round(1) }}KB, {{ att.mime_type }})</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- Right column: triage results -->
+    <div class="detail-card">
+        <h2>Triage Results</h2>
+        {% if incident.technical_summary %}
+        <div class="triage-section">
+            <h3>Summary</h3>
+            <p>{{ incident.technical_summary }}</p>
+        </div>
+
+        {% if incident.category %}
+        <div class="triage-section">
+            <h3>Category</h3>
+            <span class="tag">{{ incident.category }}</span>
+        </div>
+        {% endif %}
+
+        {% if incident.affected_component %}
+        <div class="triage-section">
+            <h3>Affected Component</h3>
+            <span class="tag">{{ incident.affected_component }}</span>
+        </div>
+        {% endif %}
+
+        {% if incident.root_cause_hypothesis %}
+        <div class="triage-section">
+            <h3>Root Cause Hypothesis</h3>
+            <p>{{ incident.root_cause_hypothesis }}</p>
+        </div>
+        {% endif %}
+
+        {% if incident.confidence is not none %}
+        <div class="triage-section">
+            <h3>Confidence</h3>
+            <div class="confidence-bar">
+                <div class="confidence-fill" style="width: {{ (incident.confidence * 100) | round }}%"></div>
+                <span>{{ (incident.confidence * 100) | round }}%</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if incident.related_files %}
+        <div class="triage-section">
+            <h3>Related Files</h3>
+            <ul class="file-list">
+                {% for file in incident.related_files %}
+                <li><code>{{ file }}</code></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if incident.recommended_actions %}
+        <div class="triage-section">
+            <h3>Recommended Actions</h3>
+            <ul>
+                {% for action in incident.recommended_actions %}
+                <li>{{ action }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-triage"
+             hx-get="/incidents/{{ incident.id }}"
+             hx-trigger="every 5s"
+             hx-select=".detail-card:nth-child(2)"
+             hx-swap="outerHTML">
+            <div class="spinner-large"></div>
+            <p>Triage pending... The AI agent is analyzing this incident.</p>
+            <small>This page auto-refreshes every 5 seconds.</small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if incident.resolved_at %}
+<div class="detail-card resolution-card">
+    <h2>Resolution</h2>
+    <p><strong>Resolved at:</strong> {{ incident.resolved_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+    {% if incident.resolution_type %}
+    <p><strong>Type:</strong> {{ incident.resolution_type }}</p>
+    {% endif %}
+    {% if incident.resolution_notes %}
+    <p>{{ incident.resolution_notes }}</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

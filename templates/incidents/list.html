@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Incidents — SRE Triage Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Incidents <span class="badge">{{ total }}</span></h1>
+    <a href="/incidents/new" class="btn btn-primary">+ Report Incident</a>
+</div>
+
+{% if incidents %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Status</th>
+            <th>Severity</th>
+            <th>Description</th>
+            <th>Reporter</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for inc in incidents %}
+        <tr class="clickable-row" onclick="window.location='/incidents/{{ inc.id }}'">
+            <td><span class="status-badge status-{{ inc.status.value }}">{{ inc.status.value }}</span></td>
+            <td>
+                {% if inc.severity %}
+                <span class="severity-badge severity-{{ inc.severity.value }}">{{ inc.severity.value }}</span>
+                {% else %}
+                <span class="severity-badge severity-pending">--</span>
+                {% endif %}
+            </td>
+            <td class="desc-cell">{{ inc.description[:120] }}{% if inc.description|length > 120 %}...{% endif %}</td>
+            <td>{{ inc.reporter_email }}</td>
+            <td class="nowrap">{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>No incidents yet.</p>
+    <a href="/incidents/new" class="btn btn-primary">Report the first incident</a>
+</div>
+{% endif %}
+{% endblock %}

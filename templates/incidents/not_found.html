@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Not Found — SRE Triage Agent{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+    <h1>Incident Not Found</h1>
+    <p>The incident you're looking for doesn't exist or has been removed.</p>
+    <a href="/incidents" class="btn btn-primary">View All Incidents</a>
+</div>
+{% endblock %}

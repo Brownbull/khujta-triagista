@@ -12,9 +12,10 @@ COPY app/ app/
 COPY alembic/ alembic/
 COPY alembic.ini .
 COPY static/ static/
+COPY templates/ templates/
 
-# Install deps (non-editable)
-RUN pip install --no-cache-dir .
+# Install deps (non-editable) + dev deps for testing
+RUN pip install --no-cache-dir ".[dev]"
 
 RUN mkdir -p /app/uploads
 

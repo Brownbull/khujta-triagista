@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Report Incident — SRE Triage Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Report New Incident</h1>
+</div>
+
+<form id="incident-form"
+      hx-post="/api/incidents"
+      hx-encoding="multipart/form-data"
+      hx-target="#form-result"
+      hx-swap="innerHTML"
+      hx-indicator="#submit-spinner"
+      class="form-card">
+
+    <div class="form-group">
+        <label for="reporter_name">Your Name (optional)</label>
+        <input type="text" id="reporter_name" name="reporter_name" placeholder="Jane Doe">
+    </div>
+
+    <div class="form-group">
+        <label for="reporter_email">Email *</label>
+        <input type="email" id="reporter_email" name="reporter_email" required placeholder="jane@example.com">
+    </div>
+
+    <div class="form-group">
+        <label for="description">Incident Description *</label>
+        <textarea id="description" name="description" rows="6" required minlength="10"
+                  placeholder="Describe what happened, what you expected, and any error messages you saw..."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="files">Attachments (screenshots, logs — max 5MB each)</label>
+        <input type="file" id="files" name="files" multiple
+               accept="image/*,.txt,.pdf,.json,.csv">
+        <small class="help-text">Allowed: images, text, PDF, JSON, CSV</small>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            Submit Incident
+            <span id="submit-spinner" class="htmx-indicator spinner"></span>
+        </button>
+        <a href="/incidents" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<div id="form-result"></div>
+
+<script>
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.successful && event.detail.xhr.status === 201) {
+            const data = JSON.parse(event.detail.xhr.responseText);
+            window.location.href = '/incidents/' + data.id;
+        } else if (!event.detail.successful) {
+            let msg = 'Something went wrong. Please try again.';
+            try {
+                const err = JSON.parse(event.detail.xhr.responseText);
+                msg = err.detail || msg;
+            } catch(e) {}
+            document.getElementById('form-result').innerHTML =
+                '<div class="alert alert-error">' + msg + '</div>';
+        }
+    });
+</script>
+{% endblock %}
