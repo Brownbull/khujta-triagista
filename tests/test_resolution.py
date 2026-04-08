@@ -3,6 +3,7 @@
 import uuid
 from unittest.mock import AsyncMock, patch
 
+from app.pipeline.guardrail.rate_limit import reset_limits
 from app.pipeline.triage.agent import TriageResult
 
 
@@ -24,6 +25,7 @@ def _mock_triage() -> TriageResult:
 
 async def _create_and_triage(client, monkeypatch):
     """Helper: create incident and triage it."""
+    reset_limits()
     monkeypatch.setattr("app.config.settings.anthropic_api_key", "test-key")
     resp = await client.post(
         "/api/incidents",
@@ -134,6 +136,50 @@ async def test_resolve_not_found(client):
         data={"resolution_type": "fix"},
     )
     assert resp.status_code == 404
+
+
+async def test_resolve_already_resolved(client, monkeypatch):
+    """Cannot resolve an incident that is already resolved."""
+    incident_id = await _create_and_triage(client, monkeypatch)
+
+    # Resolve once
+    await client.post(
+        f"/api/incidents/{incident_id}/resolve",
+        data={"resolution_type": "fix"},
+    )
+
+    # Try to resolve again
+    resp = await client.post(
+        f"/api/incidents/{incident_id}/resolve",
+        data={"resolution_type": "duplicate"},
+    )
+    assert resp.status_code == 409
+
+
+async def test_acknowledge_after_resolve(client, monkeypatch):
+    """Cannot acknowledge an already-resolved incident."""
+    incident_id = await _create_and_triage(client, monkeypatch)
+
+    await client.post(
+        f"/api/incidents/{incident_id}/resolve",
+        data={"resolution_type": "fix"},
+    )
+
+    resp = await client.post(f"/api/incidents/{incident_id}/acknowledge")
+    assert resp.status_code == 409
+
+
+async def test_resolve_without_notes(client, monkeypatch):
+    """Resolve with empty notes stores None."""
+    incident_id = await _create_and_triage(client, monkeypatch)
+
+    resp = await client.post(
+        f"/api/incidents/{incident_id}/resolve",
+        data={"resolution_type": "not-a-bug", "resolution_notes": ""},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["resolution_type"] == "not-a-bug"
+    assert resp.json()["resolution_notes"] is None
 
 
 async def test_full_lifecycle(client, monkeypatch):
