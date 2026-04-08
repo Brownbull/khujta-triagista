@@ -30,6 +30,14 @@ This fork uses offset ports to avoid conflicts with parallel sessions:
 | Langfuse     | **3100**  | 3000           | http://localhost:3100       |
 | Langfuse DB  | (internal)| 5432           | (no host port)             |
 
+### All forks port map (avoid collisions)
+
+| Fork | App | Postgres | Redis | Langfuse |
+|------|-----|----------|-------|----------|
+| GSD (`202604-agentx`) | 8800 | 5480 | — | — |
+| **ECC** (`202604-agentx-ecc`) | **8100** | **5433** | **6380** | **3100** |
+| BMad (`202604-agentx-bmad`) | 8200 | 5442 | 6389 | 3200 |
+
 **Testing**: `docker compose exec app pytest tests/ -v`
 
 ## Workflow
