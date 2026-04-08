@@ -1,6 +1,5 @@
 """Tests for the dispatch service and triage+dispatch integration."""
 
-import uuid
 from unittest.mock import AsyncMock, patch
 
 from app.pipeline.triage.agent import TriageResult

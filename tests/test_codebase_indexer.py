@@ -1,6 +1,5 @@
 """Tests for the codebase indexer service."""
 
-import os
 import tempfile
 from pathlib import Path
 
