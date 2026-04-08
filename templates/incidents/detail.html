@@ -19,11 +19,8 @@
         <!-- Lifecycle actions -->
         <div class="header-actions">
             {% if incident.status.value == 'dispatched' %}
-            <button class="btn btn-secondary btn-sm"
-                    hx-post="/api/incidents/{{ incident.id }}/acknowledge"
-                    hx-target="body"
-                    hx-swap="outerHTML"
-                    hx-confirm="Acknowledge this incident?">
+            <button class="btn btn-secondary btn-sm" id="ack-btn"
+                    onclick="acknowledgeIncident()">
                 👋 Acknowledge
             </button>
             <button class="btn btn-primary btn-sm"
@@ -42,11 +39,7 @@
 {% if incident.status.value == 'dispatched' %}
 <!-- Resolve dialog -->
 <dialog id="resolve-dialog" class="resolve-dialog">
-    <form method="dialog"
-          hx-post="/api/incidents/{{ incident.id }}/resolve"
-          hx-target="body"
-          hx-swap="outerHTML"
-          hx-encoding="application/x-www-form-urlencoded">
+    <form id="resolve-form" onsubmit="return resolveIncident(event)">
         <h3>Resolve Incident</h3>
         <div class="form-group">
             <label for="resolution_type">Resolution Type</label>
@@ -69,6 +62,37 @@
         </div>
     </form>
 </dialog>
+
+<script>
+function acknowledgeIncident() {
+    if (!confirm('Acknowledge this incident?')) return;
+    var btn = document.getElementById('ack-btn');
+    btn.textContent = 'Acknowledging...';
+    btn.disabled = true;
+    fetch('/api/incidents/{{ incident.id }}/acknowledge', { method: 'POST' })
+        .then(function(resp) {
+            if (resp.ok) { window.location.reload(); }
+            else { resp.json().then(function(d) { alert(d.detail || 'Failed'); btn.disabled = false; btn.textContent = '👋 Acknowledge'; }); }
+        })
+        .catch(function() { alert('Network error'); btn.disabled = false; btn.textContent = '👋 Acknowledge'; });
+}
+
+function resolveIncident(e) {
+    e.preventDefault();
+    var form = document.getElementById('resolve-form');
+    var data = new URLSearchParams(new FormData(form));
+    var btn = form.querySelector('button[type="submit"]');
+    btn.textContent = 'Resolving...';
+    btn.disabled = true;
+    fetch('/api/incidents/{{ incident.id }}/resolve', { method: 'POST', body: data })
+        .then(function(resp) {
+            if (resp.ok) { window.location.reload(); }
+            else { resp.json().then(function(d) { alert(d.detail || 'Failed'); btn.disabled = false; btn.textContent = '✓ Resolve Incident'; }); }
+        })
+        .catch(function() { alert('Network error'); btn.disabled = false; btn.textContent = '✓ Resolve Incident'; });
+    return false;
+}
+</script>
 {% endif %}
 
 <!-- Report -->

@@ -227,15 +227,14 @@ test("08 — Acknowledge dispatched incident", async ({ page }) => {
   await page.goto(`/incidents/${incidentId}`);
 
   // Acknowledge button should be visible for dispatched incidents
-  const ackBtn = page.locator('button:has-text("Acknowledge")');
+  const ackBtn = page.locator("#ack-btn");
   await expect(ackBtn).toBeVisible();
   await snap(page, "08a-before-acknowledge");
 
-  // Click acknowledge (dismiss confirm dialog)
+  // Click acknowledge (accept confirm dialog, wait for reload)
   page.on("dialog", (dialog) => dialog.accept());
   await ackBtn.click();
-
-  // Page should reload — ticket status should change
+  await page.waitForURL(`/incidents/${incidentId}`, { timeout: 10_000 });
   await page.waitForLoadState("networkidle");
   await snap(page, "08b-after-acknowledge");
 });
@@ -251,24 +250,29 @@ test("09 — Resolve incident with dialog", async ({ page }) => {
 
   await page.goto(`/incidents/${incidentId}`);
 
-  // Resolve via API for reliability, then verify UI
-  await fetch(`${BASE}/api/incidents/${incidentId}/resolve`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      resolution_type: "fix",
-      resolution_notes: "Search index rebuilt and hotfix deployed.",
-    }),
-  });
+  // Click Resolve button to open dialog
+  const resolveBtn = page.locator('.header-actions button:has-text("Resolve")');
+  await resolveBtn.click();
 
-  // Verify resolved state on detail page
-  await page.goto(`/incidents/${incidentId}`);
+  // Fill resolve dialog
+  const dialog = page.locator("#resolve-dialog");
+  await expect(dialog).toBeVisible();
+  await page.selectOption("#resolution_type", "fix");
+  await page.fill("#resolution_notes", "Search index rebuilt and hotfix deployed.");
+  await snap(page, "09a-resolve-dialog-filled");
+
+  // Submit and wait for page reload
+  await page.locator('#resolve-form button[type="submit"]').click();
+  await page.waitForURL(`/incidents/${incidentId}`, { timeout: 10_000 });
+  await page.waitForLoadState("networkidle");
+
+  // Verify resolved state
   await expect(page.locator(".status-badge").first()).toContainText("resolved");
-  await snap(page, "09a-incident-resolved");
+  await snap(page, "09b-incident-resolved");
 
   // Resolution card should be visible
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await snap(page, "09b-resolution-details");
+  await snap(page, "09c-resolution-details");
 });
 
 // ---------------------------------------------------------------------------
