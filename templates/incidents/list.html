@@ -7,11 +7,25 @@
     <a href="/incidents/new" class="btn btn-primary">&#128680; Report Incident</a>
 </div>
 
+<!-- Search bar -->
+<form class="search-bar" action="/incidents/search" method="get">
+    <input type="text" name="q" placeholder="&#128270; Search by incident ID or keyword&hellip;"
+           class="search-input" autocomplete="off"
+           value="{{ search_query if search_query is defined else '' }}">
+</form>
+{% if search_query is defined and search_query %}
+<p style="color: var(--fg-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+    Showing {{ total }} result{{ 's' if total != 1 else '' }} for "<strong>{{ search_query }}</strong>"
+    &mdash; <a href="/incidents">clear search</a>
+</p>
+{% endif %}
+
 {% if incidents %}
 <div class="glass-card" style="padding: 0; overflow: hidden;">
     <table class="table">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Status</th>
                 <th>Severity</th>
                 <th>Description</th>
@@ -22,6 +36,7 @@
         <tbody>
             {% for inc in incidents %}
             <tr class="clickable-row" onclick="window.location='/incidents/{{ inc.id }}'">
+                <td><code class="incident-id">{{ inc.id | string | truncate(8, True, '') }}</code></td>
                 <td><span class="status-badge status-{{ inc.status.value }}">{{ inc.status.value }}</span></td>
                 <td>
                     {% if inc.severity %}
@@ -30,7 +45,7 @@
                     <span class="severity-badge severity-pending">&mdash;</span>
                     {% endif %}
                 </td>
-                <td class="desc-cell">{{ inc.description[:100] }}{% if inc.description|length > 100 %}&hellip;{% endif %}</td>
+                <td class="desc-cell">{{ inc.description[:80] }}{% if inc.description|length > 80 %}&hellip;{% endif %}</td>
                 <td style="color: var(--fg-muted)">{{ inc.reporter_email }}</td>
                 <td class="nowrap" style="color: var(--fg-subtle)">{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
             </tr>

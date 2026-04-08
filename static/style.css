@@ -232,6 +232,33 @@ main.container { flex: 1; padding-top: 2.5rem; padding-bottom: 4rem; position: r
     color: var(--fg);
 }
 
+/* === Search Bar === */
+.search-bar { margin-bottom: 1.5rem; }
+.search-input {
+    width: 100%; padding: 0.65rem 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    color: var(--fg); font-size: 0.875rem;
+    font-family: inherit;
+    transition: all var(--duration-fast) var(--ease-out);
+    box-shadow: var(--shadow-inner);
+}
+.search-input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-faint), var(--shadow-inner);
+}
+.search-input::placeholder { color: var(--fg-subtle); }
+
+/* === Incident ID === */
+.incident-id {
+    background: var(--surface); padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-sm); font-size: 0.75rem;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    border: 1px solid var(--border);
+    color: var(--fg-muted); white-space: nowrap;
+}
+
 /* === Table === */
 .table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .table th {

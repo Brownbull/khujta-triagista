@@ -57,6 +57,62 @@ async def incident_list_page(request: Request, db: AsyncSession = Depends(get_db
     )
 
 
+@router.get("/incidents/search", response_class=HTMLResponse)
+async def incident_search_page(
+    request: Request,
+    q: str = "",
+    db: AsyncSession = Depends(get_db),
+):
+    """Search incidents by ID or keyword."""
+    incidents = []
+    q = q.strip()
+
+    if q:
+        # Try UUID lookup first
+        try:
+            search_id = uuid.UUID(q)
+            query = (
+                select(Incident)
+                .options(selectinload(Incident.attachments))
+                .where(Incident.id == search_id)
+            )
+            result = await db.execute(query)
+            found = result.scalar_one_or_none()
+            if found:
+                incidents = [found]
+        except ValueError:
+            pass
+
+        # If not a UUID or not found, search by description/email
+        if not incidents:
+            pattern = f"%{q}%"
+            query = (
+                select(Incident)
+                .options(selectinload(Incident.attachments))
+                .where(
+                    Incident.description.ilike(pattern)
+                    | Incident.reporter_email.ilike(pattern)
+                    | Incident.category.ilike(pattern)
+                    | Incident.affected_component.ilike(pattern)
+                )
+                .order_by(Incident.created_at.desc())
+                .limit(50)
+            )
+            result = await db.execute(query)
+            incidents = list(result.scalars().all())
+
+    return templates.TemplateResponse(
+        request,
+        "incidents/list.html",
+        context={
+            "incidents": incidents,
+            "total": len(incidents),
+            "page": "list",
+            "search_query": q,
+        },
+    )
+
+
 @router.get("/incidents/new", response_class=HTMLResponse)
 async def incident_new_page(request: Request):
     """Submit a new incident form."""

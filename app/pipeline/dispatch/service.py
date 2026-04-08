@@ -56,8 +56,15 @@ def _build_ticket_title(incident: Incident) -> str:
     return f"[{severity}] {category}: {short}"
 
 
+def _short_id(incident: Incident) -> str:
+    """First 8 chars of the incident UUID."""
+    return str(incident.id)[:8]
+
+
 def _build_ticket_body(incident: Incident) -> str:
     parts: list[str] = []
+
+    parts.append(f"**Incident ID:** `{incident.id}`")
 
     if incident.technical_summary:
         parts.append(f"## Technical Summary\n\n{incident.technical_summary}")
@@ -119,12 +126,15 @@ async def dispatch_incident(
     # --- Email notification to on-call ---
     oncall_email = ONCALL_ROSTER.get(assignee or "", "sre-oncall@example.com")
     severity_str = _severity_str(incident.severity)
-    email_subject = f"[{severity_str}] New incident: {title[:60]}"
+    short = _short_id(incident)
+    email_subject = f"[{severity_str}] INC-{short}: {title[:50]}"
     email_body = (
         f"A new {severity_str} incident has been triaged and assigned to your team.\n\n"
-        f"Ticket: {ticket.id}\n"
-        f"Category: {incident.category}\n"
-        f"Component: {incident.affected_component}\n\n"
+        f"Incident ID: {incident.id}\n"
+        f"Short ref:   INC-{short}\n"
+        f"Ticket:      {ticket.id}\n"
+        f"Category:    {incident.category}\n"
+        f"Component:   {incident.affected_component}\n\n"
         f"{incident.technical_summary or incident.description[:500]}\n\n"
         f"Recommended actions:\n"
     )
@@ -147,9 +157,11 @@ async def dispatch_incident(
     # --- Chat notification ---
     emoji = SEVERITY_EMOJI.get(severity_str, "")
     chat_body = (
-        f"{emoji} *{severity_str} Incident* — {incident.category}\n"
+        f"{emoji} *{severity_str} Incident* — INC-{short}\n"
+        f"Category: {incident.category}\n"
         f"Component: {incident.affected_component}\n"
         f"Assigned: {assignee}\n"
+        f"Incident: {incident.id}\n"
         f"Ticket: {ticket.id}\n"
         f"Confidence: {(incident.confidence or 0) * 100:.0f}%"
     )
