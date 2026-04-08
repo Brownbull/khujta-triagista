@@ -70,6 +70,22 @@ async def test_create_incident_with_file(client):
     assert body["attachments"][0]["mime_type"] == "text/plain"
 
 
+async def test_create_incident_file_too_large(client):
+    # Create content exceeding 5MB limit
+    large_content = b"x" * (5 * 1024 * 1024 + 1)
+    files = [("files", ("big.txt", io.BytesIO(large_content), "text/plain"))]
+    resp = await client.post(
+        "/api/incidents",
+        data={
+            "reporter_email": "test@example.com",
+            "description": "Submitting with a file that exceeds the size limit.",
+        },
+        files=files,
+    )
+    assert resp.status_code == 400
+    assert "exceeds" in resp.json()["detail"]
+
+
 async def test_create_incident_bad_file_type(client):
     files = [("files", ("malware.exe", io.BytesIO(b"binary"), "application/x-msdownload"))]
     resp = await client.post(

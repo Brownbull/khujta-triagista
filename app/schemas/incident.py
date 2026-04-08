@@ -31,7 +31,14 @@ class IncidentResponse(BaseModel):
     category: str | None
     affected_component: str | None
     technical_summary: str | None
+    root_cause_hypothesis: str | None
+    suggested_assignee: str | None
     confidence: float | None
+    recommended_actions: list | None = None
+    related_files: list | None = None
+    resolved_at: datetime | None
+    resolution_type: str | None
+    resolution_notes: str | None
     created_at: datetime
     updated_at: datetime
     attachments: list[AttachmentResponse] = []

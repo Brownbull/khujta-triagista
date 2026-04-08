@@ -61,11 +61,12 @@ async def create_incident(
         upload_dir = Path(settings.upload_dir) / str(incident.id)
         upload_dir.mkdir(parents=True, exist_ok=True)
 
+        # Validate all files before writing any to disk
+        validated_files: list[tuple[str, bytes, str]] = []
         for upload_file in files:
             if not upload_file.filename:
                 continue
 
-            # Validate mime type
             content_type = upload_file.content_type or "application/octet-stream"
             if content_type not in ALLOWED_MIME_TYPES:
                 raise HTTPException(
@@ -73,7 +74,6 @@ async def create_incident(
                     detail=f"File type '{content_type}' not allowed. Allowed: {', '.join(sorted(ALLOWED_MIME_TYPES))}",
                 )
 
-            # Read and validate size
             content = await upload_file.read()
             if len(content) > MAX_UPLOAD_BYTES:
                 raise HTTPException(
@@ -81,15 +81,18 @@ async def create_incident(
                     detail=f"File '{upload_file.filename}' exceeds {settings.max_upload_size_mb}MB limit",
                 )
 
-            # Save file
-            safe_filename = f"{uuid.uuid4().hex}_{upload_file.filename}"
+            validated_files.append((upload_file.filename, content, content_type))
+
+        # Write validated files to disk
+        for original_name, content, content_type in validated_files:
+            safe_filename = f"{uuid.uuid4().hex}_{Path(original_name).name}"
             file_path = upload_dir / safe_filename
             async with aiofiles.open(file_path, "wb") as f:
                 await f.write(content)
 
             attachment = IncidentAttachment(
                 incident_id=incident.id,
-                filename=upload_file.filename,
+                filename=original_name,
                 file_path=str(file_path),
                 mime_type=content_type,
                 file_size=len(content),

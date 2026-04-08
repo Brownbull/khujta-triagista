@@ -51,8 +51,8 @@ class Incident(Base, UUIDMixin, TimestampMixin):
     root_cause_hypothesis: Mapped[str | None] = mapped_column(Text)
     suggested_assignee: Mapped[str | None] = mapped_column(String(255))
     confidence: Mapped[float | None] = mapped_column()
-    recommended_actions: Mapped[dict | None] = mapped_column(JSON)
-    related_files: Mapped[dict | None] = mapped_column(JSON)
+    recommended_actions: Mapped[list | None] = mapped_column(JSON)
+    related_files: Mapped[list | None] = mapped_column(JSON)
 
     # Validation
     validation_flags: Mapped[dict | None] = mapped_column(JSON)

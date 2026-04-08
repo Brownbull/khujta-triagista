@@ -16,13 +16,22 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request, db: AsyncSession = Depends(get_db)):
-    """Home page — redirect to incident list."""
+    """Home page — shows recent incidents."""
+    query = (
+        select(Incident)
+        .options(selectinload(Incident.attachments))
+        .order_by(Incident.created_at.desc())
+        .limit(20)
+    )
+    result = await db.execute(query)
+    incidents = result.scalars().all()
+
     count_result = await db.execute(select(func.count(Incident.id)))
     total = count_result.scalar_one()
     return templates.TemplateResponse(
         request,
         "incidents/list.html",
-        context={"incidents": [], "total": total, "page": "list"},
+        context={"incidents": incidents, "total": total, "page": "list"},
     )
 
 
