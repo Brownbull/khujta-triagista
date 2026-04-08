@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,6 +9,9 @@ from app.database import engine
 from app.models import Base
 from app.routes.incidents import router as incidents_api_router
 from app.routes.pages import router as pages_router
+from app.services.codebase_indexer import build_index
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -18,6 +22,12 @@ async def lifespan(app: FastAPI):
     # Startup: create tables (dev convenience — production uses alembic)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Build codebase index at startup
+    logger.info("Building codebase index from %s", settings.ecommerce_repo_path)
+    app.state.codebase_index = build_index(settings.ecommerce_repo_path)
+    logger.info("Codebase index ready: %d files", app.state.codebase_index.file_count)
+
     yield
     # Shutdown
     await engine.dispose()

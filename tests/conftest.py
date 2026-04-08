@@ -7,6 +7,7 @@ from sqlalchemy.pool import NullPool
 from app.config import settings
 from app.database import get_db
 from app.models import Base
+from app.services.codebase_indexer import CodebaseIndex
 
 # Test engine: NullPool avoids asyncpg connection conflicts across event loops
 _test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
@@ -24,6 +25,9 @@ async def client():
     from app.main import app
 
     app.dependency_overrides[get_db] = _override_get_db
+
+    # Set up empty codebase index (lifespan doesn't run in test transport)
+    app.state.codebase_index = CodebaseIndex(repo_path="/tmp/test-repo")
 
     # Ensure tables exist
     async with _test_engine.begin() as conn:

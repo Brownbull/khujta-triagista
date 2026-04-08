@@ -41,7 +41,7 @@
     </div>
 
     <!-- Right column: triage results -->
-    <div class="detail-card">
+    <div class="detail-card" id="triage-panel">
         <h2>Triage Results</h2>
         {% if incident.technical_summary %}
         <div class="triage-section">
@@ -60,6 +60,13 @@
         <div class="triage-section">
             <h3>Affected Component</h3>
             <span class="tag">{{ incident.affected_component }}</span>
+        </div>
+        {% endif %}
+
+        {% if incident.suggested_assignee %}
+        <div class="triage-section">
+            <h3>Suggested Assignee</h3>
+            <span class="tag">{{ incident.suggested_assignee }}</span>
         </div>
         {% endif %}
 
@@ -85,7 +92,12 @@
             <h3>Related Files</h3>
             <ul class="file-list">
                 {% for file in incident.related_files %}
-                <li><code>{{ file }}</code></li>
+                <li>
+                    <code>{{ file.path if file is mapping else file }}</code>
+                    {% if file is mapping and file.relevance %}
+                    <span class="file-relevance">{{ file.relevance }}</span>
+                    {% endif %}
+                </li>
                 {% endfor %}
             </ul>
         </div>
@@ -94,23 +106,37 @@
         {% if incident.recommended_actions %}
         <div class="triage-section">
             <h3>Recommended Actions</h3>
-            <ul>
+            <ol class="actions-list">
                 {% for action in incident.recommended_actions %}
                 <li>{{ action }}</li>
                 {% endfor %}
-            </ul>
+            </ol>
         </div>
         {% endif %}
 
-        {% else %}
+        {% elif incident.status.value == 'triaging' %}
         <div class="empty-triage"
              hx-get="/incidents/{{ incident.id }}"
-             hx-trigger="every 5s"
-             hx-select=".detail-card:nth-child(2)"
+             hx-trigger="every 3s"
+             hx-select="#triage-panel"
              hx-swap="outerHTML">
             <div class="spinner-large"></div>
-            <p>Triage pending... The AI agent is analyzing this incident.</p>
-            <small>This page auto-refreshes every 5 seconds.</small>
+            <p>AI agent is analyzing this incident...</p>
+            <small>This page auto-refreshes every 3 seconds.</small>
+        </div>
+
+        {% else %}
+        <div class="empty-triage">
+            <p>No triage yet.</p>
+            <button class="btn btn-primary"
+                    hx-post="/api/incidents/{{ incident.id }}/triage"
+                    hx-target="#triage-panel"
+                    hx-swap="outerHTML"
+                    hx-select="#triage-panel"
+                    hx-indicator="#triage-spinner">
+                Run AI Triage
+                <span class="spinner" id="triage-spinner"></span>
+            </button>
         </div>
         {% endif %}
     </div>

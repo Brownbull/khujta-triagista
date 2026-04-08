@@ -1,8 +1,9 @@
+import logging
 import uuid
 from pathlib import Path
 
 import aiofiles
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from pydantic import ValidationError
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +12,11 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.database import get_db
 from app.models.incident import Incident, IncidentAttachment, IncidentStatus
+from app.pipeline.triage import run_triage
 from app.schemas.incident import IncidentCreate, IncidentListResponse, IncidentResponse
+from app.services.codebase_indexer import CodebaseIndex
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -145,5 +150,81 @@ async def get_incident(
 
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
+
+    return incident
+
+
+@router.post("/{incident_id}/triage", response_model=IncidentResponse)
+async def triage_incident(
+    incident_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Incident:
+    """Run AI triage on an incident. Updates the incident with triage results."""
+    query = (
+        select(Incident)
+        .options(selectinload(Incident.attachments))
+        .where(Incident.id == incident_id)
+    )
+    result = await db.execute(query)
+    incident = result.scalar_one_or_none()
+
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    if not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Triage unavailable: ANTHROPIC_API_KEY not configured",
+        )
+
+    # Update status to triaging
+    incident.status = IncidentStatus.TRIAGING
+    await db.commit()
+
+    # Get codebase index from app state
+    codebase_index: CodebaseIndex = request.app.state.codebase_index
+
+    # Build attachment descriptions for context
+    attachment_descriptions: list[str] = []
+    for att in incident.attachments:
+        attachment_descriptions.append(f"{att.filename} ({att.mime_type}, {att.file_size} bytes)")
+
+    try:
+        triage_result = await run_triage(
+            description=incident.description,
+            codebase_index=codebase_index,
+            attachment_descriptions=attachment_descriptions or None,
+        )
+    except Exception:
+        logger.exception("Triage failed for incident %s", incident_id)
+        incident.status = IncidentStatus.SUBMITTED  # revert status
+        await db.commit()
+        raise HTTPException(status_code=502, detail="Triage agent failed")
+
+    # Update incident with triage results
+    incident.severity = triage_result.severity
+    incident.category = triage_result.category
+    incident.affected_component = triage_result.affected_component
+    incident.technical_summary = triage_result.technical_summary
+    incident.root_cause_hypothesis = triage_result.root_cause_hypothesis
+    incident.suggested_assignee = triage_result.suggested_assignee
+    incident.confidence = triage_result.confidence
+    incident.recommended_actions = triage_result.recommended_actions
+    incident.related_files = triage_result.related_files
+    incident.status = IncidentStatus.DISPATCHED
+
+    await db.commit()
+    await db.refresh(incident)
+    await db.refresh(incident, attribute_names=["attachments"])
+
+    logger.info(
+        "Triage complete for %s: severity=%s, confidence=%.2f, tokens=%d/%d",
+        incident_id,
+        triage_result.severity,
+        triage_result.confidence,
+        triage_result.tokens_in,
+        triage_result.tokens_out,
+    )
 
     return incident

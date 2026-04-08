@@ -170,7 +170,7 @@ async def test_incident_detail_page_renders(client):
     resp = await client.get(f"/incidents/{incident_id}")
     assert resp.status_code == 200
     assert "page@example.com" in resp.text
-    assert "Triage pending" in resp.text  # Not triaged yet
+    assert "No triage yet" in resp.text  # Not triaged yet
 
 
 async def test_incident_not_found_page(client):

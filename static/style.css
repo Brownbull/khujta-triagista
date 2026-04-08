@@ -95,6 +95,9 @@ main.container { flex: 1; padding-top: 2rem; padding-bottom: 3rem; }
 .file-list { list-style: none; }
 .file-list li { padding: 0.2rem 0; font-size: 0.85rem; }
 .file-list code { background: var(--bg); padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.8rem; }
+.file-relevance { display: block; color: var(--text-muted); font-size: 0.78rem; margin-top: 0.1rem; padding-left: 0.4rem; }
+.actions-list { padding-left: 1.2rem; }
+.actions-list li { padding: 0.2rem 0; font-size: 0.9rem; }
 
 /* === Attachments === */
 .attachment-list { list-style: none; }
