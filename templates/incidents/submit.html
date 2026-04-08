@@ -50,16 +50,25 @@
 
 <script>
     document.body.addEventListener('htmx:afterRequest', function(event) {
+        var resultDiv = document.getElementById('form-result');
         if (event.detail.successful && event.detail.xhr.status === 201) {
-            const data = JSON.parse(event.detail.xhr.responseText);
-            window.location.href = '/incidents/' + data.id;
-        } else if (!event.detail.successful) {
-            let msg = 'Something went wrong. Please try again.';
+            var data = JSON.parse(event.detail.xhr.responseText);
+            var id = data.id;
+            var shortId = id.substring(0, 8);
+            resultDiv.innerHTML =
+                '<div class="alert alert-success">' +
+                    '<strong>Incident registered</strong> &mdash; ID: <code>' + shortId + '</code>' +
+                    '<br><a href="/incidents/' + id + '" class="alert-link">View incident &amp; run triage &rarr;</a>' +
+                '</div>';
+            // Also reset the form
+            document.getElementById('incident-form').reset();
+        } else {
+            var msg = 'Something went wrong. Please try again.';
             try {
-                const err = JSON.parse(event.detail.xhr.responseText);
+                var err = JSON.parse(event.detail.xhr.responseText);
                 msg = err.detail || msg;
             } catch(e) {}
-            document.getElementById('form-result').innerHTML =
+            resultDiv.innerHTML =
                 '<div class="alert alert-error">' + msg + '</div>';
         }
     });

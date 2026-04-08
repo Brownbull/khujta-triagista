@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/teams.html" import team_badge, team_inline, TEAM_INFO %}
 {% block title %}Incident {{ incident.id | string | truncate(8, True, '') }} — SRE Triage Agent{% endblock %}
 
 {% block content %}
@@ -65,8 +66,8 @@
 
         {% if incident.suggested_assignee %}
         <div class="triage-section">
-            <h3>Suggested Assignee</h3>
-            <span class="tag">{{ incident.suggested_assignee }}</span>
+            <h3>Assigned To</h3>
+            {{ team_badge(incident.suggested_assignee) }}
         </div>
         {% endif %}
 
@@ -151,8 +152,8 @@
         {% if incident.ticket %}
         <div class="dispatch-check">
             <span class="check-icon check-done">&#10003;</span>
-            <span>Ticket created</span>
-            <span class="dispatch-target">Internal ticketing system</span>
+            <span>Ticket created &rarr; {{ team_inline(incident.ticket.assignee) }}</span>
+            <span class="dispatch-target">Internal ticketing</span>
         </div>
         {% endif %}
         {% for notif in incident.notifications %}
@@ -179,7 +180,7 @@
             <div class="dispatch-meta">
                 <span><strong>ID:</strong> <code>{{ incident.ticket.id | string | truncate(8, True, '') }}</code></span>
                 {% if incident.ticket.assignee %}
-                <span><strong>Assigned to:</strong> {{ incident.ticket.assignee }}</span>
+                <span><strong>Assigned to:</strong> {{ team_badge(incident.ticket.assignee) }}</span>
                 {% endif %}
                 {% if incident.ticket.labels %}
                 <span><strong>Labels:</strong>

@@ -468,6 +468,20 @@ main.container { flex: 1; padding-top: 2.5rem; padding-bottom: 4rem; position: r
     margin-top: 1rem; font-size: 0.875rem;
     box-shadow: var(--shadow-inner);
 }
+.alert-success {
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.20);
+    color: var(--status-success);
+}
+.alert-success code {
+    background: var(--surface); padding: 0.1rem 0.4rem;
+    border-radius: 4px; font-size: 0.82rem;
+}
+.alert-link {
+    display: inline-block; margin-top: 0.5rem;
+    color: var(--accent-bright); font-weight: 500;
+}
+.alert-link:hover { color: var(--fg); }
 .alert-error {
     background: rgba(248,113,113,0.08);
     border: 1px solid rgba(248,113,113,0.20);
@@ -494,6 +508,22 @@ main.container { flex: 1; padding-top: 2.5rem; padding-bottom: 4rem; position: r
 .section-divider {
     height: 1px; margin: 2rem 0;
     background: linear-gradient(to right, transparent, var(--border-hover), transparent);
+}
+
+/* === Team Badges === */
+.team-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    background: var(--surface-hover);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 500;
+}
+.team-icon { font-size: 1rem; line-height: 1; }
+.team-name { color: var(--fg); }
+.team-inline {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.85rem;
 }
 
 /* === Dispatch Panel === */
