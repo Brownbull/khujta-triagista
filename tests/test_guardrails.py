@@ -5,6 +5,7 @@ from app.pipeline.guardrail.rate_limit import (
     check_rate_limit,
     record_submission,
     reset_limits,
+    use_fallback_mode,
 )
 
 
@@ -71,6 +72,11 @@ def test_pii_email():
     assert "email_low" in pii  # emails are expected in SRE reports
 
 
+def test_pii_ip_address():
+    pii = check_pii("Server 10.0.1.42 is returning 502 errors")
+    assert "ip_address_low" in pii  # IPs are expected in SRE reports
+
+
 def test_pii_phone():
     pii = check_pii("Call us at +1 (555) 123-4567")
     assert "phone" in pii
@@ -101,9 +107,11 @@ def test_no_pii_clean_text():
 
 
 # --- Rate limiting ---
+# Tests use in-memory fallback (no Redis in test env)
 
 def test_rate_limit_allows_normal():
     reset_limits()
+    use_fallback_mode()
     result = check_rate_limit("normal@example.com")
     assert result.allowed is True
     assert result.current_count == 0
@@ -111,6 +119,7 @@ def test_rate_limit_allows_normal():
 
 def test_rate_limit_blocks_after_threshold():
     reset_limits()
+    use_fallback_mode()
     email = "spammer@example.com"
     for _ in range(10):
         record_submission(email)
@@ -120,8 +129,27 @@ def test_rate_limit_blocks_after_threshold():
     assert result.retry_after_seconds is not None
 
 
+def test_rate_limit_expired_timestamps_cleaned():
+    """Expired timestamps are removed and don't count toward the limit."""
+    reset_limits()
+    use_fallback_mode()
+    email = "expired@example.com"
+    # Inject timestamps that are already past the window
+    from app.pipeline.guardrail.rate_limit import _fallback, WINDOW_SECONDS
+    import time
+    old_time = time.time() - WINDOW_SECONDS - 100  # well past the window
+    _fallback[email] = [old_time] * 5
+    # check_rate_limit should clean them and allow
+    result = check_rate_limit(email)
+    assert result.allowed is True
+    assert result.current_count == 0
+    # stale key should be reclaimed
+    assert email not in _fallback
+
+
 def test_rate_limit_different_emails_independent():
     reset_limits()
+    use_fallback_mode()
     for _ in range(10):
         record_submission("a@example.com")
     result = check_rate_limit("b@example.com")
