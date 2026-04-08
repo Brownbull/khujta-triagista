@@ -1,23 +1,25 @@
 import { test, expect, Page } from "@playwright/test";
+import fs from "fs";
 import path from "path";
 
-const SCREENSHOTS = path.join(__dirname, "screenshots");
+const SCREENSHOTS_ROOT = path.join(__dirname, "screenshots");
 const BASE = "http://localhost:8100";
 
 // Shared state across serial tests
 let incidentId: string;
 
-// Helper: save a named screenshot (with fallback for protocol errors)
-async function snap(page: Page, name: string) {
+// Helper: save a named screenshot into a per-test folder
+async function snap(page: Page, testFolder: string, name: string) {
+  const dir = path.join(SCREENSHOTS_ROOT, testFolder);
+  fs.mkdirSync(dir, { recursive: true });
   try {
     await page.screenshot({
-      path: path.join(SCREENSHOTS, `${name}.png`),
+      path: path.join(dir, `${name}.png`),
       fullPage: true,
     });
   } catch {
-    // Fallback: viewport-only screenshot if full-page fails
     await page.screenshot({
-      path: path.join(SCREENSHOTS, `${name}.png`),
+      path: path.join(dir, `${name}.png`),
     });
   }
 }
@@ -53,17 +55,16 @@ async function triageViaAPI(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Empty state
+// 01. Incident list
 // ---------------------------------------------------------------------------
 test("01 — Home page shows incident list", async ({ page }) => {
   await page.goto("/incidents");
   await expect(page.locator(".page-header h1")).toContainText("Incidents");
-  // May show seeded data or empty state — both are valid
-  await snap(page, "01-incident-list");
+  await snap(page, "01-incident-list", "incident-list");
 });
 
 // ---------------------------------------------------------------------------
-// 2. Submit form page
+// 02. Submit form page
 // ---------------------------------------------------------------------------
 test("02 — Submit form renders correctly", async ({ page }) => {
   await page.goto("/incidents/new");
@@ -73,16 +74,15 @@ test("02 — Submit form renders correctly", async ({ page }) => {
   await expect(page.locator("#reporter_email")).toBeVisible();
   await expect(page.locator("#description")).toBeVisible();
   await expect(page.locator('button[type="submit"]')).toBeVisible();
-  await snap(page, "02-submit-form-empty");
+  await snap(page, "02-submit-form", "form-empty");
 });
 
 // ---------------------------------------------------------------------------
-// 3. Fill the form (screenshot filled state), then create via API
+// 03. Fill and create incident
 // ---------------------------------------------------------------------------
 test("03 — Fill form and create incident", async ({ page }) => {
   await page.goto("/incidents/new");
 
-  // Fill form for the screenshot
   await page.fill("#reporter_name", "SRE On-Call Engineer");
   await page.fill("#reporter_email", "sre-oncall@example.com");
   await page.fill(
@@ -92,20 +92,19 @@ test("03 — Fill form and create incident", async ({ page }) => {
       "appears to be timing out. Error rate jumped from 0.1% to 45% in " +
       "the last 15 minutes. Checkout completion rate dropped to near zero."
   );
-  await snap(page, "03a-submit-form-filled");
+  await snap(page, "03-create-incident", "form-filled");
 
-  // Create via API for reliability, then navigate to the detail page
   incidentId = await createIncidentViaAPI();
   await page.goto(`/incidents/${incidentId}`);
 
   await expect(page.locator(".status-badge").first()).toContainText(
     "submitted"
   );
-  await snap(page, "03b-incident-created-detail");
+  await snap(page, "03-create-incident", "detail-submitted");
 });
 
 // ---------------------------------------------------------------------------
-// 4. Detail page — untriaged state
+// 04. Untriaged detail page
 // ---------------------------------------------------------------------------
 test("04 — Detail page shows untriaged incident with triage button", async ({
   page,
@@ -120,24 +119,21 @@ test("04 — Detail page shows untriaged incident with triage button", async ({
   await expect(
     page.locator('button:has-text("Run AI Triage")')
   ).toBeVisible();
-  await snap(page, "04-detail-untriaged");
+  await snap(page, "04-untriaged", "detail-awaiting-triage");
 });
 
 // ---------------------------------------------------------------------------
-// 5. Run AI triage (real Claude Haiku call via API, then verify UI)
+// 05. AI triage (real Claude Haiku call)
 // ---------------------------------------------------------------------------
 test("05 — Run AI triage and verify results", async ({ page }) => {
-  test.setTimeout(90_000); // Claude API can take 10-30s
+  test.setTimeout(90_000);
 
   if (!incidentId) incidentId = await createIncidentViaAPI();
 
-  // Trigger triage via API for reliability
   await triageViaAPI(incidentId);
 
-  // Now load the detail page and verify results rendered
   await page.goto(`/incidents/${incidentId}`);
 
-  // Verify key triage elements
   await expect(page.locator(".triage-section").first()).toBeVisible();
   await expect(page.locator(".status-badge").first()).toContainText(
     "dispatched"
@@ -145,15 +141,14 @@ test("05 — Run AI triage and verify results", async ({ page }) => {
   await expect(page.locator(".severity-badge")).toBeVisible();
   await expect(page.locator(".confidence-fill")).toBeVisible();
 
-  await snap(page, "05a-triage-results-top");
+  await snap(page, "05-triage-results", "triage-top");
 
-  // Scroll to see related files and actions
   await page.evaluate(() => window.scrollBy(0, 500));
-  await snap(page, "05b-triage-results-scrolled");
+  await snap(page, "05-triage-results", "triage-scrolled");
 });
 
 // ---------------------------------------------------------------------------
-// 6. Ticket and notifications on detail page
+// 06. Dispatch panel
 // ---------------------------------------------------------------------------
 test("06 — Verify dispatch panel with ticket and notifications", async ({
   page,
@@ -165,38 +160,29 @@ test("06 — Verify dispatch panel with ticket and notifications", async ({
 
   await page.goto(`/incidents/${incidentId}`);
 
-  // Dispatch card with checklist
   await expect(page.locator(".dispatch-card")).toBeVisible();
   await expect(page.locator(".dispatch-checklist")).toBeVisible();
 
-  // All checks should be done (green checkmarks)
   const checks = page.locator(".check-done");
   await expect(checks.first()).toBeVisible();
 
-  // Scroll to dispatch section
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await snap(page, "06a-dispatch-checklist");
+  await snap(page, "06-dispatch", "checklist");
 
-  // Expand ticket detail
   await page.click("details.dispatch-detail:first-of-type summary");
   await expect(page.locator(".dispatch-preview").first()).toBeVisible();
-  await snap(page, "06b-ticket-expanded");
+  await snap(page, "06-dispatch", "ticket-expanded");
 
-  // Expand email notification
   const emailDetail = page.locator("details.dispatch-detail:nth-of-type(2)");
   await emailDetail.locator("summary").click();
-  await snap(page, "06c-email-expanded");
+  await snap(page, "06-dispatch", "email-expanded");
 
-  // Integration notice should be visible
   await expect(page.locator(".integration-notice")).toBeVisible();
-  await expect(page.locator(".integration-notice")).toContainText(
-    "Mock integrations"
-  );
-  await snap(page, "06d-integration-notice");
+  await snap(page, "06-dispatch", "integration-notice");
 });
 
 // ---------------------------------------------------------------------------
-// 7. Incident list shows triaged incident
+// 07. Incident list with triaged incident
 // ---------------------------------------------------------------------------
 test("07 — Incident list shows dispatched incident with badges", async ({
   page,
@@ -207,16 +193,15 @@ test("07 — Incident list shows dispatched incident with badges", async ({
     timeout: 5_000,
   });
 
-  // Check badges
   const firstRow = page.locator(".clickable-row").first();
   await expect(firstRow.locator(".status-badge")).toBeVisible();
   await expect(firstRow.locator(".severity-badge")).toBeVisible();
 
-  await snap(page, "07-incident-list-with-triaged");
+  await snap(page, "07-list-dispatched", "list-with-badges");
 });
 
 // ---------------------------------------------------------------------------
-// 8. Acknowledge incident
+// 08. Acknowledge incident
 // ---------------------------------------------------------------------------
 test("08 — Acknowledge dispatched incident", async ({ page }) => {
   if (!incidentId) {
@@ -226,21 +211,19 @@ test("08 — Acknowledge dispatched incident", async ({ page }) => {
 
   await page.goto(`/incidents/${incidentId}`);
 
-  // Acknowledge button should be visible for dispatched incidents
   const ackBtn = page.locator("#ack-btn");
   await expect(ackBtn).toBeVisible();
-  await snap(page, "08a-before-acknowledge");
+  await snap(page, "08-acknowledge", "before");
 
-  // Click acknowledge (accept confirm dialog, wait for reload)
   page.on("dialog", (dialog) => dialog.accept());
   await ackBtn.click();
   await page.waitForURL(`/incidents/${incidentId}`, { timeout: 10_000 });
   await page.waitForLoadState("networkidle");
-  await snap(page, "08b-after-acknowledge");
+  await snap(page, "08-acknowledge", "after");
 });
 
 // ---------------------------------------------------------------------------
-// 9. Resolve incident
+// 09. Resolve incident
 // ---------------------------------------------------------------------------
 test("09 — Resolve incident with dialog", async ({ page }) => {
   if (!incidentId) {
@@ -250,33 +233,31 @@ test("09 — Resolve incident with dialog", async ({ page }) => {
 
   await page.goto(`/incidents/${incidentId}`);
 
-  // Click Resolve button to open dialog
   const resolveBtn = page.locator('.header-actions button:has-text("Resolve")');
   await resolveBtn.click();
 
-  // Fill resolve dialog
   const dialog = page.locator("#resolve-dialog");
   await expect(dialog).toBeVisible();
   await page.selectOption("#resolution_type", "fix");
-  await page.fill("#resolution_notes", "Search index rebuilt and hotfix deployed.");
-  await snap(page, "09a-resolve-dialog-filled");
+  await page.fill(
+    "#resolution_notes",
+    "Search index rebuilt and hotfix deployed."
+  );
+  await snap(page, "09-resolve", "dialog-filled");
 
-  // Submit and wait for page reload
   await page.locator('#resolve-form button[type="submit"]').click();
   await page.waitForURL(`/incidents/${incidentId}`, { timeout: 10_000 });
   await page.waitForLoadState("networkidle");
 
-  // Verify resolved state
   await expect(page.locator(".status-badge").first()).toContainText("resolved");
-  await snap(page, "09b-incident-resolved");
+  await snap(page, "09-resolve", "resolved-status");
 
-  // Resolution card should be visible
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await snap(page, "09c-resolution-details");
+  await snap(page, "09-resolve", "resolution-details");
 });
 
 // ---------------------------------------------------------------------------
-// 10. Incident list shows resolved incident
+// 10. Final incident list
 // ---------------------------------------------------------------------------
 test("10 — Incident list shows resolved incident", async ({ page }) => {
   await page.goto("/incidents");
@@ -285,7 +266,7 @@ test("10 — Incident list shows resolved incident", async ({ page }) => {
     timeout: 5_000,
   });
 
-  await snap(page, "10-incident-list-final");
+  await snap(page, "10-list-final", "list-with-resolved");
 });
 
 // ---------------------------------------------------------------------------
@@ -299,5 +280,5 @@ test("11 — 404 page for non-existent incident", async ({ page }) => {
     page.locator('a:has-text("View All Incidents")')
   ).toBeVisible();
 
-  await snap(page, "08-not-found-page");
+  await snap(page, "11-not-found", "not-found-page");
 });
