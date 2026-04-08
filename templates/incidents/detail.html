@@ -142,49 +142,122 @@
     </div>
 </div>
 
-{% if incident.ticket %}
-<div class="detail-card ticket-card">
-    <h2>Ticket</h2>
-    <div class="detail-meta">
-        <span><strong>ID:</strong> <code style="background: var(--surface); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.78rem;">{{ incident.ticket.id | string | truncate(8, True, '') }}</code></span>
-        <span><strong>Status:</strong> <span class="status-badge status-{{ incident.ticket.status.value }}">{{ incident.ticket.status.value }}</span></span>
-        {% if incident.ticket.assignee %}
-        <span><strong>Assigned to:</strong> {{ incident.ticket.assignee }}</span>
-        {% endif %}
-    </div>
-    <div class="ticket-title">{{ incident.ticket.title }}</div>
-</div>
-{% endif %}
+{% if incident.ticket or incident.notifications %}
+<div class="detail-card dispatch-card">
+    <h2>Dispatch Actions</h2>
 
-{% if incident.notifications %}
-<div class="detail-card notifications-card">
-    <h2>Notifications ({{ incident.notifications | length }})</h2>
-    <table class="table table-compact">
-        <thead>
-            <tr>
-                <th>Type</th>
-                <th>Recipient</th>
-                <th>Status</th>
-                <th>Sent</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for notif in incident.notifications %}
-            <tr>
-                <td><span class="tag">{{ notif.type.value }}</span></td>
-                <td style="color: var(--fg-muted)">{{ notif.recipient }}</td>
-                <td>
-                    {% if notif.sent %}
-                    <span class="status-badge status-resolved">sent</span>
-                    {% else %}
-                    <span class="status-badge status-rejected">failed</span>
-                    {% endif %}
-                </td>
-                <td class="nowrap" style="color: var(--fg-subtle)">{{ notif.sent_at.strftime('%H:%M:%S') if notif.sent_at else '—' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Summary checklist -->
+    <div class="dispatch-checklist">
+        {% if incident.ticket %}
+        <div class="dispatch-check">
+            <span class="check-icon check-done">&#10003;</span>
+            <span>Ticket created</span>
+            <span class="dispatch-target">Internal ticketing system</span>
+        </div>
+        {% endif %}
+        {% for notif in incident.notifications %}
+        <div class="dispatch-check">
+            <span class="check-icon check-done">&#10003;</span>
+            <span>{{ 'Email sent' if notif.type.value == 'email' else 'Chat notification sent' }}</span>
+            <span class="dispatch-target">{{ notif.recipient }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Expandable: Ticket -->
+    {% if incident.ticket %}
+    <details class="dispatch-detail">
+        <summary class="dispatch-summary">
+            <span class="dispatch-icon">&#128203;</span>
+            <span class="dispatch-label">Ticket</span>
+            <span class="status-badge status-{{ incident.ticket.status.value }}">{{ incident.ticket.status.value }}</span>
+            <span class="dispatch-integration-tag">Mock &mdash; ready for Jira / Linear / Trello</span>
+        </summary>
+        <div class="dispatch-content">
+            <div class="dispatch-meta">
+                <span><strong>ID:</strong> <code>{{ incident.ticket.id | string | truncate(8, True, '') }}</code></span>
+                {% if incident.ticket.assignee %}
+                <span><strong>Assigned to:</strong> {{ incident.ticket.assignee }}</span>
+                {% endif %}
+                {% if incident.ticket.labels %}
+                <span><strong>Labels:</strong>
+                    {% for key, val in incident.ticket.labels.items() %}
+                    <span class="tag">{{ key }}: {{ val }}</span>
+                    {% endfor %}
+                </span>
+                {% endif %}
+            </div>
+            <div class="dispatch-preview-label">Ticket title</div>
+            <div class="dispatch-preview">{{ incident.ticket.title }}</div>
+            <div class="dispatch-preview-label">Ticket body (Markdown)</div>
+            <div class="dispatch-preview dispatch-preview-body">{{ incident.ticket.body }}</div>
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- Expandable: Email notification -->
+    {% for notif in incident.notifications %}
+    {% if notif.type.value == 'email' %}
+    <details class="dispatch-detail">
+        <summary class="dispatch-summary">
+            <span class="dispatch-icon">&#9993;</span>
+            <span class="dispatch-label">Email Notification</span>
+            {% if notif.sent %}
+            <span class="status-badge status-resolved">sent</span>
+            {% else %}
+            <span class="status-badge status-rejected">failed</span>
+            {% endif %}
+            <span class="dispatch-integration-tag">Mock &mdash; ready for SendGrid / SES / SMTP</span>
+        </summary>
+        <div class="dispatch-content">
+            <div class="dispatch-meta">
+                <span><strong>To:</strong> {{ notif.recipient }}</span>
+                <span><strong>Subject:</strong> {{ notif.subject }}</span>
+                <span><strong>Sent at:</strong> {{ notif.sent_at.strftime('%Y-%m-%d %H:%M:%S UTC') if notif.sent_at else 'N/A' }}</span>
+            </div>
+            <div class="dispatch-preview-label">Email body</div>
+            <div class="dispatch-preview dispatch-preview-body">{{ notif.body }}</div>
+        </div>
+    </details>
+    {% endif %}
+
+    {% if notif.type.value == 'chat' %}
+    <details class="dispatch-detail">
+        <summary class="dispatch-summary">
+            <span class="dispatch-icon">&#128172;</span>
+            <span class="dispatch-label">Chat Notification</span>
+            {% if notif.sent %}
+            <span class="status-badge status-resolved">sent</span>
+            {% else %}
+            <span class="status-badge status-rejected">failed</span>
+            {% endif %}
+            <span class="dispatch-integration-tag">Mock &mdash; ready for Slack / Discord / Telegram</span>
+        </summary>
+        <div class="dispatch-content">
+            <div class="dispatch-meta">
+                <span><strong>Channel:</strong> {{ notif.recipient }}</span>
+                <span><strong>Sent at:</strong> {{ notif.sent_at.strftime('%Y-%m-%d %H:%M:%S UTC') if notif.sent_at else 'N/A' }}</span>
+            </div>
+            <div class="dispatch-preview-label">Message body</div>
+            <div class="dispatch-preview dispatch-preview-body">{{ notif.body }}</div>
+        </div>
+    </details>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Integration notice -->
+    <div class="integration-notice">
+        <span class="integration-notice-icon">&#9881;</span>
+        <div>
+            <strong>Mock integrations</strong> &mdash; All dispatch actions are stored locally in PostgreSQL.
+            Each channel can be connected to an external service:
+            <strong>Jira/Linear/Trello</strong> for tickets,
+            <strong>SendGrid/SES</strong> for email,
+            <strong>Slack/Discord/Telegram</strong> for chat.
+        </div>
+    </div>
 </div>
 {% endif %}
 

@@ -54,11 +54,12 @@ async def test_triage_creates_ticket(client, monkeypatch):
     assert body["status"] == "dispatched"
     assert body["severity"] == "P1"
 
-    # Verify ticket was created via detail page
+    # Verify dispatch panel shows on detail page
     detail_resp = await client.get(f"/incidents/{incident_id}")
     assert detail_resp.status_code == 200
     html = detail_resp.text
-    assert "Ticket" in html
+    assert "Dispatch Actions" in html
+    assert "Ticket created" in html
     assert "payments-team" in html
 
 
@@ -86,14 +87,14 @@ async def test_triage_creates_notifications(client, monkeypatch):
 
     assert resp.status_code == 200
 
-    # Check notifications show on detail page
+    # Check dispatch panel shows notifications
     detail_resp = await client.get(f"/incidents/{incident_id}")
     html = detail_resp.text
-    assert "Notifications" in html
-    assert "email" in html
-    assert "chat" in html
+    assert "Dispatch Actions" in html
+    assert "Email sent" in html
+    assert "Chat notification sent" in html
     assert "#incidents" in html
-    assert "sent" in html
+    assert "Mock integrations" in html
 
 
 async def test_full_e2e_flow(client, monkeypatch):
@@ -133,8 +134,9 @@ async def test_full_e2e_flow(client, monkeypatch):
     # All sections should be visible
     assert "Triage Results" in html
     assert "payment-processing" in html
-    assert "Ticket" in html
-    assert "Notifications" in html
+    assert "Dispatch Actions" in html
+    assert "Ticket created" in html
+    assert "Mock integrations" in html
     assert "92" in html  # confidence percentage
 
     # Step 4: API shows triage results

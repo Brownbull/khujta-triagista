@@ -143,7 +143,7 @@ test("05 — Run AI triage and verify results", async ({ page }) => {
 // ---------------------------------------------------------------------------
 // 6. Ticket and notifications on detail page
 // ---------------------------------------------------------------------------
-test("06 — Verify ticket and notifications are displayed", async ({
+test("06 — Verify dispatch panel with ticket and notifications", async ({
   page,
 }) => {
   if (!incidentId) {
@@ -153,19 +153,34 @@ test("06 — Verify ticket and notifications are displayed", async ({
 
   await page.goto(`/incidents/${incidentId}`);
 
-  // Ticket card
-  await expect(page.locator(".ticket-card")).toBeVisible();
-  await expect(page.locator(".ticket-card")).toContainText("Ticket");
+  // Dispatch card with checklist
+  await expect(page.locator(".dispatch-card")).toBeVisible();
+  await expect(page.locator(".dispatch-checklist")).toBeVisible();
 
-  // Notifications card
-  await expect(page.locator(".notifications-card")).toBeVisible();
-  await expect(page.locator(".notifications-card")).toContainText("email");
-  await expect(page.locator(".notifications-card")).toContainText("chat");
-  await expect(page.locator(".notifications-card")).toContainText("sent");
+  // All checks should be done (green checkmarks)
+  const checks = page.locator(".check-done");
+  await expect(checks.first()).toBeVisible();
 
-  // Scroll to bottom to capture ticket + notifications
+  // Scroll to dispatch section
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await snap(page, "06-ticket-and-notifications");
+  await snap(page, "06a-dispatch-checklist");
+
+  // Expand ticket detail
+  await page.click("details.dispatch-detail:first-of-type summary");
+  await expect(page.locator(".dispatch-preview").first()).toBeVisible();
+  await snap(page, "06b-ticket-expanded");
+
+  // Expand email notification
+  const emailDetail = page.locator("details.dispatch-detail:nth-of-type(2)");
+  await emailDetail.locator("summary").click();
+  await snap(page, "06c-email-expanded");
+
+  // Integration notice should be visible
+  await expect(page.locator(".integration-notice")).toBeVisible();
+  await expect(page.locator(".integration-notice")).toContainText(
+    "Mock integrations"
+  );
+  await snap(page, "06d-integration-notice");
 });
 
 // ---------------------------------------------------------------------------
