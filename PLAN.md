@@ -20,7 +20,7 @@
 | **8. Observability** | OpenTelemetry spans, Langfuse LLM tracing | SHOULD | ✅ Done | `4155547` | 4 |
 | **9. Resolution** | Acknowledge/resolve lifecycle, reporter notify | SHOULD | ✅ Done | `phase9` | 8 |
 | **10. Extras** | Severity reasoning, runbooks, dedup | COULD | 🔲 Pending | — | — |
-| **11. Documentation** | README, AGENTS_USE.md, SCALING.md, diagrams | MUST | 🟡 Started | `bb7c312` | — |
+| **11. Documentation** | README, AGENTS_USE.md, SCALING.md, QUICKGUIDE.md, LICENSE | MUST | ✅ Done | `phase11` | — |
 | **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 
 **Test total: 77 pytest + 8 Playwright E2E**
@@ -67,14 +67,14 @@ Auto-dispatch (ticket + email + chat) → Detail page with full results
 
 ---
 
-## Phase 11: Documentation (Pending)
+## Phase 11: Documentation (Done)
 
 ### Deliverables
-- [x] README.md — quickstart, credentials, architecture
-- [ ] AGENTS_USE.md — how agents are used in the system
-- [ ] SCALING.md — scaling strategy and production considerations
-- [ ] Architecture diagrams (Mermaid)
-- [ ] QUICKGUIDE.md — juror walkthrough
+- [x] README.md — solution intro, quickstart, credentials, architecture
+- [x] AGENTS_USE.md — agent docs (9 sections per Anthropic template)
+- [x] SCALING.md — 3-tier scaling strategy with diagrams and cost estimates
+- [x] QUICKGUIDE.md — juror walkthrough (setup → full demo in 3 minutes)
+- [x] LICENSE — MIT
 
 ---
 

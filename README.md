@@ -1,6 +1,12 @@
 # SRE Triage Agent
 
-AI-powered SRE Incident Intake & Triage Agent — analyzes incident reports against the [Solidus](https://github.com/solidusio/solidus) e-commerce codebase and produces structured triage with severity, root cause hypothesis, affected files, and recommended actions.
+AI-powered SRE Incident Intake & Triage Agent for the [AgentX Hackathon 2026](https://github.com/anthropics/agentx-hackathon).
+
+**The problem:** When an SRE incident is reported, engineers spend 15-30 minutes manually triaging — reading descriptions, searching codebases, classifying severity, and routing to the right team. This is slow, error-prone, and pulls senior engineers away from fixing.
+
+**Our solution:** An AI agent that takes an incident description, analyzes it against the [Solidus](https://github.com/solidusio/solidus) e-commerce codebase (~30K LOC), and produces a structured triage in ~15 seconds: severity classification (P1-P4), root cause hypothesis, affected source files, recommended actions, and auto-dispatches a ticket with team notifications. The full lifecycle is tracked from submission through resolution.
+
+**How it works:** Claude Haiku analyzes incident descriptions using `tool_use` for structured output, with codebase context loaded from a pre-built keyword index of the Solidus repository. Input guardrails detect prompt injection and PII before the LLM is called. The entire pipeline is traced via OpenTelemetry and Langfuse.
 
 ## Quick Start
 
@@ -73,10 +79,10 @@ User → FastAPI + HTMX UI
 ## Testing
 
 ```bash
-# Unit + integration tests (inside Docker)
+# Unit + integration tests (80 tests, inside Docker)
 docker compose exec app pytest tests/ -v
 
-# E2E tests with screenshots (from host, requires Playwright)
+# E2E tests with screenshots (11 tests, from host, requires Playwright)
 npx playwright test
 
 # Lint
