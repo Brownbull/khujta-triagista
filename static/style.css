@@ -597,6 +597,33 @@ main.container { flex: 1; padding-top: 2.5rem; padding-bottom: 4rem; position: r
     -webkit-text-fill-color: var(--fg-muted);
 }
 
+/* === Guardrail Badges === */
+.guardrail-status {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+.guardrail-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.6rem; border-radius: var(--radius-full);
+    font-size: 0.72rem; font-weight: 600;
+}
+.guardrail-safe {
+    background: rgba(74,222,128,0.10); color: var(--status-success);
+    border: 1px solid rgba(74,222,128,0.20);
+}
+.guardrail-warn {
+    background: rgba(251,191,36,0.10); color: var(--status-warn);
+    border: 1px solid rgba(251,191,36,0.20);
+}
+.guardrail-danger {
+    background: rgba(248,113,113,0.10); color: var(--status-danger);
+    border: 1px solid rgba(248,113,113,0.20);
+}
+.guardrail-flag {
+    background: var(--surface-hover); color: var(--fg-muted);
+    border: 1px solid var(--border-hover);
+}
+
 /* === Dispatch Panel === */
 .dispatch-card { margin-top: 1.5rem; }
 .dispatch-checklist {

@@ -42,6 +42,24 @@
         {% endfor %}
     </ul>
     {% endif %}
+
+    {% if incident.validation_flags or incident.injection_score is not none %}
+    <h3>Security Scan</h3>
+    <div class="guardrail-status">
+        {% if incident.injection_score is not none %}
+        <span class="guardrail-badge {{ 'guardrail-safe' if incident.injection_score < 0.5 else ('guardrail-warn' if incident.injection_score < 0.9 else 'guardrail-danger') }}">
+            🛡 Injection: {{ (incident.injection_score * 100) | round }}%
+        </span>
+        {% endif %}
+        {% if incident.validation_flags and incident.validation_flags.flags %}
+        {% for flag in incident.validation_flags.flags %}
+        <span class="guardrail-badge guardrail-flag">⚑ {{ flag }}</span>
+        {% endfor %}
+        {% else %}
+        <span class="guardrail-badge guardrail-safe">✓ Clean</span>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <!-- Triage Results -->

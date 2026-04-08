@@ -13,6 +13,8 @@ from app.config import settings
 from app.database import get_db
 from app.models.incident import Incident, IncidentAttachment, IncidentStatus
 from app.pipeline.dispatch import dispatch_incident
+from app.pipeline.guardrail import validate_input
+from app.pipeline.guardrail.rate_limit import check_rate_limit, record_submission
 from app.pipeline.triage import run_triage
 from app.schemas.incident import IncidentCreate, IncidentListResponse, IncidentResponse
 from app.services.codebase_indexer import CodebaseIndex
@@ -53,11 +55,30 @@ async def create_incident(
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors())
 
+    # Rate limiting
+    rate_result = check_rate_limit(data.reporter_email)
+    if not rate_result.allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded ({rate_result.limit}/hour). "
+                   f"Retry after {rate_result.retry_after_seconds}s.",
+        )
+
+    # Guardrail checks
+    guardrail = validate_input(data.description)
+    if guardrail.rejected:
+        raise HTTPException(status_code=400, detail=guardrail.rejection_reason)
+
+    # Record submission for rate limiting
+    record_submission(data.reporter_email)
+
     incident = Incident(
         reporter_name=data.reporter_name,
         reporter_email=data.reporter_email,
         description=data.description,
         status=IncidentStatus.SUBMITTED,
+        validation_flags={"flags": guardrail.flags, "passed": guardrail.passed},
+        injection_score=guardrail.injection_score,
     )
     db.add(incident)
     await db.flush()  # Get the ID

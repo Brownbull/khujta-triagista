@@ -36,6 +36,8 @@ class IncidentResponse(BaseModel):
     confidence: float | None
     recommended_actions: list | None = None
     related_files: list | None = None
+    validation_flags: dict | None = None
+    injection_score: float | None = None
     resolved_at: datetime | None
     resolution_type: str | None
     resolution_notes: str | None
