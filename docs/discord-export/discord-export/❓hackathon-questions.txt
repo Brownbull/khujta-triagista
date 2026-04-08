@@ -1,0 +1,108 @@
+# Channel: #❓hackathon-questions
+# Exported: 2026-04-07T15:54:26.730637
+# Messages: 17
+============================================================
+
+[2026-04-07 16:18:37] sebastianmontagna_54230: 
+
+[2026-04-07 16:18:37] sebastianmontagna_54230: Thank you <@1393698955019292832> ! Very good question. I created this new hackathn questions channels so we can address it there.
+
+[2026-04-07 16:22:47] sebastianmontagna_54230: <@1393698955019292832> there's no restriction on this. If you want to use a particular API, you should just be very explicit on it so we can test it. Obviously if you use OpenAI Compatible (or other compatible APIs), it would make things easier to maintain, scale, etc... from an software engineering perspective.
+
+[2026-04-07 16:26:04] icksir: Hey! I have doubts related to the input for our agent workflow. What do you mean by incident report? Is it a pentesting report, a log file, a vulnerability that was recently found and reported, a combination of these?
+
+[2026-04-07 16:27:39] sebastianmontagna_54230: That's up to you to define, scope, implement and manage 😉
+  [Replying to icksir: Hey! I have doubts related to the input for our agent workflow. What do you mean]
+
+[2026-04-07 16:31:56] angellopez_10580: Will there be a leaderboard?
+
+[2026-04-07 17:02:51] sebastianmontagna_54230: @everyone We've addressed all the questions raised on the Kick-Off, please check them here:
+
+**Q&A Summary**
+
+1. Teaming
+Q: Can we team up with other solo participants?
+A: We’ve enabled the <#1491102851814916116>  channel. Please coordinate there and then register the Team Leader accordingly.
+
+2. Recording
+Q: Is this session going to be recorded?
+A: Yes, the recording will be send via email.
+
+3. Access to materials
+Q: How can I access materials, deliverables, platform, etc.?
+A: They are all here. If we've missed anything, let us know and we'll include it!
+
+4. Models usage
+Q: Which models can we use?
+A: Any model can be used.
+
+5. Demo video requirements
+Q: Do we need a step-by-step explanation in the demo video?
+A: The video should clearly demonstrate the value and main flow of the solution (step-by-step is not strictly required).
+
+6. UI / integrations
+Q: Do we need to build a ticket UI or can we integrate with Jira/Notion?
+A: You should create an input UI. After processing, you can send tickets to Jira, Notion, or other systems.
+
+7. Local LLM usage
+Q: Can I use local LLM models on private servers?
+A: Yes, preferably with an OpenAI-compatible endpoint for integration.
+
+8. Restrictions
+Q: Is there anything forbidden?
+A: No strict restrictions, but solutions should follow ethical AI principles and responsible AI guidelines.
+
+9. Security requirements
+Q: What level of security implementation is expected?
+A: No strict requirements — follow responsible AI principles, though this is open for you to showcase your engineering and creative capabilities.
+
+10. Ticketing workflow
+Q: Can you share an existing ticketing workflow?
+A: No predefined system — you can choose and design your own approach. We recommended you to use the Open Source frameworks provided in <#1488672274960613447> FAQ# 4.
+
+12. Late registration
+Q: Can people who missed registration still join?
+A: No
+
+13. Technical (Docker)
+Q: Is it enough if the solution works in Docker?
+A: It should.
+
+[2026-04-07 17:12:12] sebastianmontagna_54230: 
+
+[2026-04-07 17:50:02] joedoe6179: Just to be clear. The "Resoluion" of the incident is triggered from a human or by the agent?
+
+[2026-04-07 18:20:44] sebastianmontagna_54230: These are the only **required** steps:
+1. Submit the report via UI.
+2. Agent triages on submit: extracts key details + produces an initial technical summary (using code/docs as available).
+3. The agent creates a ticket in a ticketing system (Jira/Linear/Other).
+4. Agent notifies the technical team (email and/or communicator).
+5. When the ticket becomes resolved, the agent notifies the original reporter.
+
+If you can come up with an extra step to classify and address thing agentically, it is a great differentiator and would great. But it is also complex, so up to you!
+  [Replying to joedoe6179: Just to be clear. The "Resoluion" of the incident is triggered from a human or b]
+
+[2026-04-07 18:22:12] joedoe6179: Thank you
+  [Replying to sebastianmontagna_54230: These are the only **required** steps:
+1. Submit the report via UI.
+2. Agent tri]
+
+[2026-04-07 18:43:03] manuelgarcia: Hello, sorry to ask this here—I originally posted in <#1491102851814916116> , but I think this question is better suited for this channel.
+
+I have been accepted, but my teammate hasn't. Is it possible to add them to the project, or must I proceed solo?
+
+[2026-04-07 18:46:29] lucidotbat: Hello! Any idea on where I can find the agents use MD reference file? URL https://docs.anthropic.com/en/docs/agents-use-md redirects to a non existing docs page.
+  [Embed: Not Found - Claude API Docs] Page not found
+  [Attachment: image.png - https://cdn.discordapp.com/attachments/1491109597828743339/1491147169393283215/image.png?ex=69d6a285&is=69d55105&hm=403c7f7c7c492fd3ec66f8d4f43ad3e349a88b809071797fefb735e0f809da61&]
+
+[2026-04-07 19:15:03] sebastianmontagna_54230: Very sorry, this is an oversight on our side. I addressed everything here: https://discord.com/channels/1486732462955430121/1488672530821812366/1491154065294626906
+  [Replying to lucidotbat: Hello! Any idea on where I can find the agents use MD reference file? URL https:]
+
+[2026-04-07 19:16:41] itzdiego.: Hi! I was wondering if in the <#1488672274960613447> there is a FAQ #6? it seems to skip that number
+
+[2026-04-07 19:17:09] lucidotbat: Thanks!
+  [Replying to sebastianmontagna_54230: Very sorry, this is an oversight on our side. I addressed everything here: https]
+
+[2026-04-07 19:17:32] sebastianmontagna_54230: Nope, just a mistake on my side 😅  Fixed!
+  [Replying to itzdiego.: Hi! I was wondering if in the <#1488672274960613447> there is a FAQ #6? it seems]
+

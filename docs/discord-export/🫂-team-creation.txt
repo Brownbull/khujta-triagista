@@ -1,0 +1,66 @@
+# Channel: #🫂-team-creation
+# Exported: 2026-04-07T15:54:25.221641
+# Messages: 22
+============================================================
+
+[2026-04-07 16:24:19] joedoe6179: Hi, is this to create/join a team if I'm a Solo participant?
+
+[2026-04-07 16:24:41] happier.helmut: Same
+
+[2026-04-07 16:24:54] sebastianmontagna_54230: Exactly, please introduce yourself, gather and you can then register the Team Leader for the new team.
+
+[2026-04-07 16:29:40] joedoe6179: Great, thank you guys for opening this option.
+
+Hey there! 👋
+
+My name is Andres, I'm a fullstack engineer. Anyone else looking for a team? Happy to serve as a Team Leader or join an existing team.
+
+[2026-04-07 16:30:52] .kindalikedeus: Hello, my name is Paul Furlan, I am from Guadalajara, I am highly skilled in Cloud and DevOps with some medium experience in backend & front end development.  Lots of creativity and great communication skills (fluent in Spanish & English). Looking to collaborate with someone looking for a team
+
+[2026-04-07 16:34:02] joedoe6179: I'm open for team, what you think guys if we meet? <@1065278284373438564> <@359380171410636821> The faster we create a team the sooner we can start planning and executing.
+
+[2026-04-07 17:22:28] ouroboroz333: Hello, good afternoon. I'm a DevOps engineer looking for a partner or team for the hackathon. I have experience developing AI locally with llama.cpp and I also know about observability, specifically in the LLM context. Here's a sample of my work. If anyone is interested, we can form a team.
+  [Attachment: phoenix.jpeg - https://cdn.discordapp.com/attachments/1491102851814916116/1491126026753806336/phoenix.jpeg?ex=69d68ed4&is=69d53d54&hm=32720e4e7de70efccb912870a90c7ee1e293b79b23046ea7b039ba53022b6ad1&]
+  [Attachment: tui.jpeg - https://cdn.discordapp.com/attachments/1491102851814916116/1491126027278356671/tui.jpeg?ex=69d68ed4&is=69d53d54&hm=05c6bce4fcd5fdbe71165ccee55c6d8d708827395e78362c62d24976c1f3398b&]
+  [Attachment: webui.jpeg - https://cdn.discordapp.com/attachments/1491102851814916116/1491126027689394377/webui.jpeg?ex=69d68ed4&is=69d53d54&hm=962bc6bcdb5208591285ee8a105ac752551b309e5589bbef804534babfbea2e0&]
+  [Attachment: phoenix2.jpeg - https://cdn.discordapp.com/attachments/1491102851814916116/1491126028071080087/phoenix2.jpeg?ex=69d68ed4&is=69d53d54&hm=726caf16136b7defaf068115269095cca0de3c33f9e9fa248fe839758b019135&]
+
+[2026-04-07 17:23:22] ouroboroz333: This is a end-to-end local AI with gemma 3 project from the model to the frontend in a desktop or laptop
+
+[2026-04-07 17:26:25] joedoe6179: I'm looking for a team too. I'm a fullstack engineer. DM?
+  [Replying to ouroboroz333: Hello, good afternoon. I'm a DevOps engineer looking for a partner or team for t]
+
+[2026-04-07 17:30:15] happier.helmut: Hello I am backend engineer
+
+[2026-04-07 17:32:28] joedoe6179: <@1488520483803631748> can teams be from different countries or any restrictions on that?
+
+[2026-04-07 17:35:10] joedoe6179: hey guys <@1065278284373438564> <@1307941641109114881> <@359380171410636821> , looks like the four of us are teamless and looking for people, let's work together.
+
+[2026-04-07 17:36:23] happier.helmut: 🤟😎
+
+[2026-04-07 17:55:31] nadiia_rnd: hey! team members can be from different countries, but remember - only from Columbia, Mexico, Chile 🙌🏼
+  [Replying to joedoe6179: <@1488520483803631748> can teams be from different countries or any restrictions]
+
+[2026-04-07 17:57:22] joedoe6179: great, thanks <@1486730932621676554>
+  [Replying to nadiia_rnd: hey! team members can be from different countries, but remember - only from Colu]
+
+[2026-04-07 18:08:00] elmetan: If every team member got accepted but one, was that because of a mistake or was it possible for a team to apply but not every member to be allowed into the hackathon? We sent some emails but we didn't get any answers and that's is why I'm asking here, since I don't know any other propper channel
+  [Replying to nadiia_rnd: hey! team members can be from different countries, but remember - only from Colu]
+
+[2026-04-07 18:13:03] francisco.ortiz_41350: Hi everyone, I’m Francisco Ortiz, a Full Stack Developer from Chile, joining the AgentX Hackathon with Team Marfinex.
+I’m participating as a solo builder, focused on creating a practical, well-structured agentic solution with real value and strong execution.
+Excited to be here and looking forward to building, learning, and connecting with you all.
+
+[2026-04-07 18:13:46] nadiia_rnd: hey! thanks for messaging!! could you send me email about this? I’ll check this case 
+nsvin@softserveinc.com
+  [Replying to elmetan: If every team member got accepted but one, was that because of a mistake or was ]
+
+[2026-04-07 18:14:37] elmetan: thank you!
+
+[2026-04-07 18:30:59] manuelgarcia: I have been accepted, but my teammate hasn't. Is it possible to add them to the project, or must I proceed solo?
+
+[2026-04-07 18:57:16] .pepe__: Hi I'm José from Chile, mostly back end, will be nice to join a team.
+
+[2026-04-07 19:04:56] nadiia_rnd: hey! yes, in this case, you would be participating individually
+  [Replying to manuelgarcia: I have been accepted, but my teammate hasn't. Is it possible to add them to the ]
+

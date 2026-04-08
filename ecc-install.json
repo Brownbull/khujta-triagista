@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "target": "claude",
+  "profile": "developer",
+  "include": [
+    "lang:python",
+    "capability:database",
+    "capability:agentic",
+    "capability:devops"
+  ]
+}

@@ -1,0 +1,93 @@
+[
+  {
+    "type": 0,
+    "content": "**Welcome to #ask-mentors!** 🧑‍🏫\n\nThis is the official channel for technical questions during the build sprint. Our mentor team is here to help you build a production-ready solution.\n\nBefore posting, make sure you have the Team Leader role. If you don't have it yet, register in #team-leader-registry first.\n\n✨ How to ask a question:\n\n- Start your message with your team name in brackets: [Team Alpha]\n- Be specific — include what you've tried and where you're stuck\n- One question per message — don't bundle multiple topics\n\n👷‍♂️ Our mentors will help with:\n\n- Clarifying the assignment and requirements\n- Architecture and system design guidance\n- Observability, security, and context engineering best practices\n- Pointing you to relevant tools and documentation\n\n🦥 Our mentors will not:\n\n- Write code for you\n- Debug your specific implementation line by line\n- Answer logistics questions (use #ask-org for those)\n- All answers are shared publicly so every team can benefit. No direct messages to mentors, please.\n\nLive Q&A sessions are scheduled during the sprint — Good luck building! 🚀",
+    "mentions": [],
+    "mention_roles": [],
+    "attachments": [],
+    "embeds": [],
+    "timestamp": "2026-04-06T22:41:50.715000+00:00",
+    "edited_timestamp": null,
+    "flags": 0,
+    "components": [],
+    "id": "1490844010791829524",
+    "channel_id": "1488673277252735157",
+    "author": {
+      "id": "1488520483803631748",
+      "username": "sebastianmontagna_54230",
+      "avatar": "7b1f53b0c5ee18a59400b6d39eafac38",
+      "discriminator": "0",
+      "public_flags": 0,
+      "flags": 0,
+      "banner": null,
+      "accent_color": null,
+      "global_name": "Sebastian Montagna",
+      "avatar_decoration_data": null,
+      "collectibles": null,
+      "display_name_styles": null,
+      "banner_color": null,
+      "clan": null,
+      "primary_guild": null
+    },
+    "pinned": true,
+    "mention_everyone": false,
+    "tts": false,
+    "reactions": [
+      {
+        "emoji": {
+          "id": null,
+          "name": "💯"
+        },
+        "count": 1,
+        "count_details": {
+          "burst": 0,
+          "normal": 1
+        },
+        "burst_colors": [],
+        "me_burst": false,
+        "burst_me": false,
+        "me": false,
+        "burst_count": 0
+      }
+    ]
+  },
+  {
+    "type": 6,
+    "content": "",
+    "mentions": [],
+    "mention_roles": [],
+    "attachments": [],
+    "embeds": [],
+    "timestamp": "2026-04-06T22:41:56.254000+00:00",
+    "edited_timestamp": null,
+    "flags": 0,
+    "components": [],
+    "id": "1490844034024083640",
+    "channel_id": "1488673277252735157",
+    "author": {
+      "id": "1488520483803631748",
+      "username": "sebastianmontagna_54230",
+      "avatar": "7b1f53b0c5ee18a59400b6d39eafac38",
+      "discriminator": "0",
+      "public_flags": 0,
+      "flags": 0,
+      "banner": null,
+      "accent_color": null,
+      "global_name": "Sebastian Montagna",
+      "avatar_decoration_data": null,
+      "collectibles": null,
+      "display_name_styles": null,
+      "banner_color": null,
+      "clan": null,
+      "primary_guild": null
+    },
+    "pinned": false,
+    "mention_everyone": false,
+    "tts": false,
+    "message_reference": {
+      "type": 0,
+      "channel_id": "1488673277252735157",
+      "message_id": "1490844010791829524"
+    }
+  }
+]

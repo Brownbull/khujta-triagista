@@ -1,0 +1,29 @@
+# Channel: #🏛️-ask-org
+# Exported: 2026-04-07T15:54:19.695417
+# Messages: 4
+============================================================
+
+[2026-04-06 22:26:48] sebastianmontagna_54230: **Welcome to SoftServe channel!** 👋
+
+Have questions about SoftServe? 
+Who we are, what we do, or what it's like to work with us? This is the place.
+
+Our organizing team is here to answer questions about SoftServe as a company, career opportunities, our R&D practice, what working in our engineering teams looks like, and anything else you're curious about beyond the hackathon itself.
+
+Feel free to ask — we'd love to get to know you too!
+
+
+For hackathon logistics and rules, check #rules-and-guidelines and #faq.
+For technical questions about the assignment, head to #ask-mentors.
+
+[2026-04-06 22:26:52] sebastianmontagna_54230: 
+
+[2026-04-07 16:15:21] alasaltum: You mentioned that all environment variables should be documented in an .env.example file.
+
+Since you might want to test our projects, we will likely need to include API keys as environment variables. Would you be able to provide us with some test API keys to include as examples in our submissions? This would help you test the projects more quickly.
+
+Also, what if we use less common providers like OpenRouter? Of course you have API KEYS like ANTHROPIC_API_KEY or OPENAI_API_KEY, be preferred?
+
+[2026-04-07 16:25:39] adroh_sose: Please don't include API keys. We have access to most providers. As long as the endpoint supports the OPENAI or Anthropic API, we can configure it
+  [Replying to alasaltum: You mentioned that all environment variables should be documented in an .env.exa]
+

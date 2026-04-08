@@ -1,0 +1,135 @@
+# Channel: #⁉️-faq
+# Exported: 2026-04-07T15:54:12.308911
+# Messages: 14
+============================================================
+
+[2026-04-01 21:41:46] sebastianmontagna_54230: FAQ #1: What is the exact submission deadline?
+
+The submission deadline is Wednesday, April 9 at 9:00 PM Colombia time (COT, UTC-5). This is the same timezone used for the kick-off event.
+
+Here's what that looks like in each country:
+🇲🇽 Mexico — 9:00 PM CST (UTC-6)
+🇨🇴 Colombia — 10:00 PM COT (UTC-5)
+🇨🇱 Chile — 11:00 PM CLT (UTC-4)
+
+All teams have the same amount of time from kick-off to submission regardless of location. Late submissions will not be accepted.
+
+[2026-04-01 21:41:53] sebastianmontagna_54230: 
+
+[2026-04-01 21:44:06] sebastianmontagna_54230: FAQ #2: Will API keys or AI tool licenses be provided?
+
+Unfortunately, we are not able to provide API keys, AI tool subscriptions, or LLM access for this hackathon. All participants are responsible for bringing their own tools and infrastructure.
+
+The good news is that several providers offer generous free tiers or low-cost options that are more than enough for a 2-day build sprint:
+
+🟢 Free tiers:
+— Google Gemini API → free tier with multimodal support → [ai.google.dev](https://ai.google.dev/)
+— Groq → free tier with fast inference (Llama, Mixtral) → [console.groq.com](https://console.groq.com/home)
+— Mistral AI → free tier available → [console.mistral.ai](https://mistral.ai/models)
+— CloudFlare Workers AI → free tier available → [developers.cloudflare.com](https://developers.cloudflare.com/workers-ai/platform/pricing/)
+— Hugging Face Inference API → free access to open models → [huggingface.co](https://huggingface.co/)
+
+💰 Pay-as-you-go (low cost):
+— OpenAI → pay-as-you-go, $5 minimum credit → [platform.openai.com](https://platform.openai.com/login)
+— Anthropic Claude → pay-as-you-go, $5 minimum credit → [console.anthropic.com](https://platform.claude.com/login?returnTo=%2F%3F)
+— OpenRouter → single API, multiple models, some free → [openrouter.ai](https://openrouter.ai/)
+— Together AI → free credits for new accounts → [together.ai](https://www.together.ai/)
+
+Keep your API keys in environment variables — never commit them to your repository‼️
+
+[2026-04-01 21:47:18] sebastianmontagna_54230: 
+
+[2026-04-06 21:30:02] sebastianmontagna_54230: FAQ #3: Where do I find the assignment, technical requirements, and deliverables?
+All assignment-related information is organized in a single channel for easy reference:
+#assignment — Contains three pinned posts:
+
+🧑‍🏭 Assignment — The full challenge description, core E2E flow, and minimum requirements
+🚀 Technical Requirements — Required repository structure, Docker setup, demo video specs, and submission checklist
+🛳️ Deliverables — What you need to submit, file formats, and optional extras
+
+Start with the Assignment post, then review Technical Requirements and Deliverables before you begin building. These three posts contain everything you need to know about what to build and how to submit.
+
+[2026-04-06 21:52:52] sebastianmontagna_54230: 
+
+[2026-04-06 21:54:13] sebastianmontagna_54230: FAQ #4: Which e-commerce framework should I use?
+
+The assignment requires you to use a medium/complex open-source e-commerce repository as the application your SRE Agent will monitor and triage incidents for.
+Here are some recommended options to get you started:
+
+.NET — eShop by Microsoft: https://github.com/dotnet/eShop
+Ruby on Rails — Solidus: https://github.com/solidusio/solidus
+Node.js — Reaction Commerce: https://github.com/reactioncommerce/reaction
+
+✨ You are not limited to these options. You may use any open-source e-commerce repository that meets the following criteria:
+
+It is publicly available and open-source
+It has a medium to complex codebase (not a simple tutorial project)
+It gives your agent enough code and documentation to analyze during triage
+
+Choose a repository that fits your team's tech stack and expertise. What matters is not which e-commerce platform you pick, but how well your SRE Agent handles incidents against it.
+
+[2026-04-06 21:54:25] sebastianmontagna_54230: 
+
+[2026-04-06 22:35:15] sebastianmontagna_54230: FAQ #5: How does #ask-mentors work?
+The <#1488673277252735157>  channel is restricted to participants with the Team Leader role. This keeps the channel focused and manageable for our mentor team across 91 teams.
+
+❓ How to get access:
+
+Have your team's designated leader send a message in <#1490841727983161505> with your team name and request the **Team Leader** role.
+An organizer or mentor will assign the role to you.
+Once assigned, you'll be able to post questions in <#1488673277252735157> .
+
+Rules for <#1488673277252735157> 
+
+🟢 Only one team leader per team
+
+🟢 One question per message — start with your team name in brackets: [Team Alpha]
+🟢 Be specific — include what you've tried and where you're stuck
+🟢 No direct messages to mentors — all questions go through the channel so every team benefits
+🟢 English only
+
+🧑‍🏫 What mentors will help with:
+Architecture guidance, observability and security best practices, assignment clarification, and pointing you to relevant tools and documentation.
+What mentors will not do:
+Write code for you, debug your specific implementation, or answer logistics questions (use #ask-org for those).
+
+[2026-04-06 22:35:22] sebastianmontagna_54230: 
+
+[2026-04-07 16:26:57] sebastianmontagna_54230: FAQ #6: Should I use specific API providers? Will you provide test API keys?
+
+We will not provide API keys for testing. Your .env.example file should include clear placeholders and comments for every environment variable your application needs — but never actual keys.
+
+‼️ There is no restriction on which LLM provider you use. You are free to choose OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, or any other provider that fits your solution.
+
+That said, keep the following in mind:
+
+🔻 Be explicit about which provider and model your project requires. Document this clearly in your QUICKGUIDE.md and .env.example so reviewers can set it up quickly.
+
+🔻 OpenAI-compatible APIs are a plus. If your application supports the OpenAI-compatible API format (which providers like OpenRouter, Groq, and many others also support), it makes it easier to swap providers during testing. 
+
+From a software engineering perspective, this is better for maintainability, scalability, and portability.
+
+✨ OpenRouter is a good option if you want to give reviewers flexibility. A single API key can access multiple models from different providers.
+
+[2026-04-07 16:27:01] sebastianmontagna_54230: 
+
+[2026-04-07 19:03:06] sebastianmontagna_54230: FAQ #7: What is AGENTS_USE.md?
+
+▶️ AGENTS_USE.md is a required file at the root of your repository where you document your agent implementation. It provides evaluators with a standardized view of what your agents do, how they work, and the evidence behind your decisions.
+
+The file must cover all these points in a brief text-based concise manner:
+
+- Agent overview and tech stack
+- Agents and their capabilities (one entry per agent/sub-agent)
+- Architecture, orchestration, and error handling
+- Context engineering approach
+- Use cases with step-by-step flows
+- Observability — logging, tracing, metrics (evidence required)
+- Security and guardrails (evidence required)
+- Scalability summary
+- Lessons learned and team reflections
+
+⚪ A full template is attached in <#1488672530821812366> . Copy it into your repo and fill in each section.
+
+[2026-04-07 19:03:11] sebastianmontagna_54230: 
+
