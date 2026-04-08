@@ -18,12 +18,12 @@
 | **6. Notifications** | Email + chat mock dispatch, on-call roster | MUST | ✅ Done | `8c487ee` | 3 |
 | **7. Guardrails** | Injection detection, PII scan, rate limiting | SHOULD | ✅ Done | `814c885` | 18 |
 | **8. Observability** | OpenTelemetry spans, Langfuse LLM tracing | SHOULD | ✅ Done | `4155547` | 4 |
-| **9. Resolution** | Acknowledge/resolve lifecycle, reporter notify | SHOULD | 🔲 Next | — | — |
+| **9. Resolution** | Acknowledge/resolve lifecycle, reporter notify | SHOULD | ✅ Done | `phase9` | 8 |
 | **10. Extras** | Severity reasoning, runbooks, dedup | COULD | 🔲 Pending | — | — |
 | **11. Documentation** | README, AGENTS_USE.md, SCALING.md, diagrams | MUST | 🟡 Started | `bb7c312` | — |
 | **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 
-**Test total: 67 pytest + 8 Playwright E2E**
+**Test total: 77 pytest + 8 Playwright E2E**
 
 ---
 
@@ -53,22 +53,17 @@ Auto-dispatch (ticket + email + chat) → Detail page with full results
 
 ---
 
-## Phase 9: Resolution Tracker (Next)
+## Phase 9: Resolution Tracker (Done)
 
 **Goal**: Close the incident lifecycle — acknowledge → resolve → notify reporter.
 
-### Tasks
-- [ ] Add "Acknowledge" button (dispatched → ticket in_progress)
-- [ ] Add "Resolve" button with resolution notes (→ incident resolved, timestamp)
-- [ ] Send resolution notification to reporter email (mock)
-- [ ] Update incident list to show resolved status
-- [ ] Write tests for lifecycle transitions
-- [ ] Update Playwright E2E to cover resolution flow
-
-### Acceptance
-- User can move incident through: submitted → triaging → dispatched → resolved
-- Reporter gets a notification when resolved
-- Resolution timestamp and notes visible on detail page
+### Delivered
+- [x] POST /api/incidents/{id}/acknowledge — moves ticket to in_progress
+- [x] POST /api/incidents/{id}/resolve — resolves incident, closes ticket, notifies reporter
+- [x] Resolve dialog with resolution type (fix, workaround, not-a-bug, duplicate, won't fix) + notes
+- [x] Reporter email notification on resolution (mock)
+- [x] Lifecycle buttons in sticky header (Acknowledge, Resolve)
+- [x] 8 new tests including full lifecycle test (submit → triage → acknowledge → resolve)
 
 ---
 

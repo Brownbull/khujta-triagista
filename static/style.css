@@ -282,6 +282,29 @@ main.container { flex: 1; padding-top: 2.5rem; padding-bottom: 4rem; position: r
     flex-wrap: wrap;
 }
 .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.8rem; }
+.header-actions { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+.header-hint {
+    font-size: 0.75rem; color: var(--fg-subtle); font-style: italic;
+}
+
+/* === Resolve Dialog === */
+.resolve-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+    color: var(--fg);
+    padding: 2rem; max-width: 480px; width: 90vw;
+}
+.resolve-dialog::backdrop {
+    background: rgba(0,0,0,0.70);
+    backdrop-filter: blur(4px);
+}
+.resolve-dialog h3 {
+    margin-bottom: 1.25rem; font-size: 1.1rem; font-weight: 600;
+}
+.resolve-dialog .form-group { margin-bottom: 1rem; }
+.resolve-dialog .form-actions { margin-top: 1.5rem; }
 
 /* === Table === */
 .table { width: 100%; border-collapse: separate; border-spacing: 0; }

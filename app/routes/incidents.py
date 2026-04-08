@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 import aiofiles
@@ -12,6 +13,8 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.database import get_db
 from app.models.incident import Incident, IncidentAttachment, IncidentStatus
+from app.models.notification import Notification, NotificationType
+from app.models.ticket import TicketStatus
 from app.pipeline.dispatch import dispatch_incident
 from app.pipeline.guardrail import validate_input
 from app.pipeline.guardrail.rate_limit import check_rate_limit, record_submission
@@ -286,4 +289,105 @@ async def triage_incident(
         triage_ms,
     )
 
+    return incident
+
+
+@router.post("/{incident_id}/acknowledge", response_model=IncidentResponse)
+async def acknowledge_incident(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Incident:
+    """Acknowledge a dispatched incident — moves ticket to in_progress."""
+    query = (
+        select(Incident)
+        .options(
+            selectinload(Incident.attachments),
+            selectinload(Incident.ticket),
+        )
+        .where(Incident.id == incident_id)
+    )
+    result = await db.execute(query)
+    incident = result.scalar_one_or_none()
+
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    if incident.status != IncidentStatus.DISPATCHED:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot acknowledge incident in '{incident.status.value}' status",
+        )
+
+    if incident.ticket:
+        incident.ticket.status = TicketStatus.IN_PROGRESS
+
+    await db.commit()
+    await db.refresh(incident)
+    await db.refresh(incident, attribute_names=["attachments"])
+
+    logger.info("Incident %s acknowledged", incident_id)
+    return incident
+
+
+@router.post("/{incident_id}/resolve", response_model=IncidentResponse)
+async def resolve_incident(
+    incident_id: uuid.UUID,
+    resolution_type: str = Form("fix"),
+    resolution_notes: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+) -> Incident:
+    """Resolve an incident — closes ticket and notifies reporter."""
+    query = (
+        select(Incident)
+        .options(
+            selectinload(Incident.attachments),
+            selectinload(Incident.ticket),
+        )
+        .where(Incident.id == incident_id)
+    )
+    result = await db.execute(query)
+    incident = result.scalar_one_or_none()
+
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    if incident.status not in (IncidentStatus.DISPATCHED, IncidentStatus.TRIAGING):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot resolve incident in '{incident.status.value}' status",
+        )
+
+    # Update incident
+    incident.status = IncidentStatus.RESOLVED
+    incident.resolved_at = datetime.now(timezone.utc)
+    incident.resolution_type = resolution_type
+    incident.resolution_notes = resolution_notes or None
+
+    # Close ticket
+    if incident.ticket:
+        incident.ticket.status = TicketStatus.RESOLVED
+
+    # Notify reporter
+    short_id = str(incident.id)[:8]
+    reporter_notification = Notification(
+        incident_id=incident.id,
+        type=NotificationType.EMAIL,
+        recipient=incident.reporter_email,
+        subject=f"[Resolved] INC-{short_id}: Your incident has been resolved",
+        body=(
+            f"Your incident INC-{short_id} has been resolved.\n\n"
+            f"Resolution: {resolution_type}\n"
+            f"{('Notes: ' + resolution_notes) if resolution_notes else ''}\n\n"
+            f"If the issue persists, please submit a new incident."
+        ),
+        sent=True,
+        sent_at=datetime.now(timezone.utc),
+    )
+    db.add(reporter_notification)
+
+    await db.commit()
+    await db.refresh(incident)
+    await db.refresh(incident, attribute_names=["attachments"])
+
+    logger.info("Incident %s resolved: type=%s", incident_id, resolution_type)
     return incident

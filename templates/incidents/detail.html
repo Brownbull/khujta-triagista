@@ -15,8 +15,61 @@
         {% if incident.suggested_assignee %}
         {{ team_pill(incident.suggested_assignee) }}
         {% endif %}
+
+        <!-- Lifecycle actions -->
+        <div class="header-actions">
+            {% if incident.status.value == 'dispatched' %}
+            <button class="btn btn-secondary btn-sm"
+                    hx-post="/api/incidents/{{ incident.id }}/acknowledge"
+                    hx-target="body"
+                    hx-swap="outerHTML"
+                    hx-confirm="Acknowledge this incident?">
+                👋 Acknowledge
+            </button>
+            <button class="btn btn-primary btn-sm"
+                    onclick="document.getElementById('resolve-dialog').showModal()">
+                ✓ Resolve
+            </button>
+            {% elif incident.status.value == 'submitted' %}
+            <span class="header-hint">Awaiting triage</span>
+            {% elif incident.status.value == 'resolved' %}
+            <span class="header-hint">✓ Resolved</span>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+{% if incident.status.value == 'dispatched' %}
+<!-- Resolve dialog -->
+<dialog id="resolve-dialog" class="resolve-dialog">
+    <form method="dialog"
+          hx-post="/api/incidents/{{ incident.id }}/resolve"
+          hx-target="body"
+          hx-swap="outerHTML"
+          hx-encoding="application/x-www-form-urlencoded">
+        <h3>Resolve Incident</h3>
+        <div class="form-group">
+            <label for="resolution_type">Resolution Type</label>
+            <select id="resolution_type" name="resolution_type">
+                <option value="fix">🔧 Fix applied</option>
+                <option value="workaround">🔄 Workaround</option>
+                <option value="not-a-bug">🚫 Not a bug</option>
+                <option value="duplicate">📋 Duplicate</option>
+                <option value="wont-fix">⏭ Won't fix</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="resolution_notes">Notes</label>
+            <textarea id="resolution_notes" name="resolution_notes" rows="3"
+                      placeholder="What was done to resolve this..."></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✓ Resolve Incident</button>
+            <button type="button" class="btn btn-secondary" onclick="this.closest('dialog').close()">Cancel</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
 
 <!-- Report -->
 <div class="detail-card">
