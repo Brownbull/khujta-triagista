@@ -5,11 +5,12 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import engine
+from app.database import engine, async_session
 from app.models import Base
 from app.routes.incidents import router as incidents_api_router
 from app.routes.pages import router as pages_router
 from app.services.codebase_indexer import build_index
+from app.services.seed_data import seed_database
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,11 @@ async def lifespan(app: FastAPI):
     logger.info("Building codebase index from %s", settings.ecommerce_repo_path)
     app.state.codebase_index = build_index(settings.ecommerce_repo_path)
     logger.info("Codebase index ready: %d files", app.state.codebase_index.file_count)
+
+    # Seed sample data in development
+    if settings.app_env == "development":
+        async with async_session() as db:
+            await seed_database(db)
 
     yield
     # Shutdown
