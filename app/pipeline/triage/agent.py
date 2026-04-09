@@ -4,10 +4,17 @@ Takes an incident description (+ optional attachments), loads relevant codebase
 context from the Solidus index, and calls Claude to produce a structured triage.
 """
 
+from __future__ import annotations
+
 import logging
-from dataclasses import dataclass
+import os
+from typing import TYPE_CHECKING
 
 import anthropic
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from app.pipeline.knowledge.loader import KnowledgeLoader
 
 from app.config import settings
 from app.services.codebase_indexer import CodebaseIndex, search_files
@@ -126,9 +133,12 @@ TRIAGE_TOOL = {
 }
 
 
-@dataclass(frozen=True)
-class TriageResult:
-    """Structured triage output from the agent."""
+class TriageResult(BaseModel):
+    """Structured triage output — produced by all engines.
+
+    Pydantic BaseModel (not frozen dataclass) so LangChain can use
+    `with_structured_output(TriageResult)` for schema-enforced responses.
+    """
 
     severity: str
     category: str
@@ -136,11 +146,30 @@ class TriageResult:
     technical_summary: str
     root_cause_hypothesis: str
     suggested_assignee: str
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
     recommended_actions: list[str]
     related_files: list[dict[str, str]]
-    tokens_in: int
-    tokens_out: int
+    tokens_in: int = 0
+    tokens_out: int = 0
+    engine: str = "anthropic"
+
+
+def verify_files(related_files: list[dict[str, str]], codebase_dir: str) -> list[dict[str, str]]:
+    """Verify each related file exists in the mounted codebase.
+
+    Adds a 'verified' key to each file dict. Marks unverified files.
+    """
+    verified = []
+    for f in related_files:
+        path = f.get("path", "")
+        clean_path = path.split("#")[0]  # strip line references
+        full_path = os.path.join(codebase_dir, clean_path)
+        f_copy = dict(f)
+        f_copy["verified"] = os.path.exists(full_path)
+        if not f_copy["verified"]:
+            f_copy["relevance"] = f"[UNVERIFIED] {f_copy.get('relevance', '')}"
+        verified.append(f_copy)
+    return verified
 
 
 def _build_codebase_context(index: CodebaseIndex, description: str) -> str:
@@ -174,6 +203,7 @@ async def run_triage(
     codebase_index: CodebaseIndex,
     attachment_descriptions: list[str] | None = None,
     provider_override: str = "",
+    knowledge_loader: "KnowledgeLoader | None" = None,
 ) -> TriageResult:
     """Run the triage agent on an incident description.
 
@@ -185,6 +215,7 @@ async def run_triage(
         codebase_index: Pre-built index of the target codebase.
         attachment_descriptions: Optional text descriptions of attached files.
         provider_override: If set, use this provider instead of the default.
+        knowledge_loader: Progressive disclosure knowledge (L0-L3). Falls back to codebase_index.
 
     Returns:
         TriageResult with the structured triage assessment.
@@ -194,16 +225,28 @@ async def run_triage(
     provider_name = provider_override or getattr(settings, "triage_provider", "anthropic")
     provider = get_provider(provider_name)
 
-    codebase_context = _build_codebase_context(codebase_index, description)
+    # Prefer progressive disclosure knowledge over raw codebase dump
+    if knowledge_loader:
+        codebase_context = knowledge_loader.get_context(description)
+        logger.info("Using progressive disclosure knowledge (L0+L1+L2)")
+    else:
+        codebase_context = _build_codebase_context(codebase_index, description)
+        logger.info("Using raw codebase index (no knowledge loader)")
 
     logger.info(
-        "Running triage via %s provider (description: %d chars)",
+        "Running triage via %s provider (description: %d chars, context: %d chars)",
         provider_name,
         len(description),
+        len(codebase_context),
     )
 
-    return await provider.triage(
+    result = await provider.triage(
         description=description,
         codebase_context=codebase_context,
         attachment_descriptions=attachment_descriptions,
     )
+
+    # Post-triage: verify related files exist in the codebase
+    result.related_files = verify_files(result.related_files, settings.ecommerce_repo_path)
+
+    return result

@@ -230,8 +230,9 @@ async def triage_incident(
     incident.status = IncidentStatus.TRIAGING
     await db.commit()
 
-    # Get codebase index from app state
+    # Get codebase index and knowledge loader from app state
     codebase_index: CodebaseIndex = request.app.state.codebase_index
+    knowledge_loader = getattr(request.app.state, "knowledge_loader", None)
 
     # Build attachment descriptions for context
     attachment_descriptions: list[str] = []
@@ -269,6 +270,7 @@ async def triage_incident(
                 codebase_index=codebase_index,
                 attachment_descriptions=attachment_descriptions or None,
                 provider_override=triage_provider,
+                knowledge_loader=knowledge_loader,
             )
         triage_ms = (_time.monotonic() - t0) * 1000
     except Exception:

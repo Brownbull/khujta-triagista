@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Groq (for LangChain provider fallback)
     groq_api_key: str = ""
 
+    # Managed Agents (Experimental engine)
+    managed_agent_id: str = ""
+    managed_environment_id: str = ""
+
     # Langfuse
     langfuse_secret_key: str = ""
     langfuse_public_key: str = ""

@@ -26,6 +26,12 @@
 | **14. UI Redesign** | Ops dashboard + chat view + settings (based on mockup 13) | MUST | ✅ Done | `phase14` | — |
 | **15. Agent Providers** | Strategy pattern: Anthropic, LangChain, Managed Agents | MUST | ✅ Done | `phase15` | — |
 | **16. Test Updates** | Pytest selectors updated for new UI | MUST | ✅ Done | `phase16` | 80 |
+| **17. Knowledge Base** | Progressive disclosure L0-L3 + KnowledgeLoader | MUST | 🔲 Pending | — | — |
+| **18. TriageResult + VERIFY** | Pydantic BaseModel migration + file verification | MUST | 🔲 Pending | — | — |
+| **19. LangChain Upgrade** | structured_output + fallback chain + knowledge context | MUST | 🔲 Pending | — | — |
+| **20. Anthropic Upgrade** | Knowledge context integration for Premium engine | MUST | 🔲 Pending | — | — |
+| **21. Managed Agents** | Real Anthropic Managed Agents API (REST polling) | SHOULD | 🔲 Pending | — | — |
+| **22. PII Detection** | detect_pii + sanitize_for_output on all outputs | COULD | 🔲 Pending | — | — |
 
 **Test total: 80 pytest + 16 Playwright E2E**
 
@@ -55,7 +61,8 @@ Auto-dispatch (ticket + email + chat) → Acknowledge → Resolve → Reporter n
 - Full documentation: README, AGENTS_USE.md, SCALING.md, QUICKGUIDE.md, LICENSE
 
 ### What's remaining
-- **Phase 12**: Demo video recording
+- **Phase 17-22**: Three-engine upgrade (El Triagista architecture)
+- **Phase 12**: Demo video recording (last)
 
 ---
 
@@ -215,6 +222,110 @@ The `run_triage()` function signature stays identical. Routes and tests call `ru
 
 ---
 
+## Phase 17: Knowledge Base + KnowledgeLoader (Pending)
+
+**Goal**: Progressive disclosure context system — replace raw codebase dump with curated L0-L3 knowledge layers.
+
+**Source**: Pre-built files from El Triagista sidecar at `/home/khujta/projects/khujta_agents/_bmad/custom/agents/el-triagista/el-triagista-sidecar/knowledge/`
+
+### Architecture
+```
+L0 — Architecture Map (~500 tokens)     ← ALWAYS loaded at startup
+L1 — Component Index (~1,500 tokens)    ← ALWAYS loaded at startup
+L2 — Domain Deep-Dive (~900 tokens)     ← ON-DEMAND per triage (keyword-matched)
+L3 — Source Code (variable)             ← FALLBACK to actual codebase files
+```
+
+### New files
+- [ ] `app/pipeline/knowledge/` — directory with L0, L1, L2 markdown files
+- [ ] `app/pipeline/knowledge/loader.py` — `KnowledgeLoader` class: startup load L0+L1, keyword-match L2, fallback L3
+
+### Modified files
+- [ ] `app/pipeline/triage/agent.py` — replace `_build_codebase_context()` with `KnowledgeLoader.get_context()`
+- [ ] `app/main.py` — load `KnowledgeLoader` in lifespan, store in `app.state`
+
+---
+
+## Phase 18: TriageResult Migration + VERIFY Step (Pending)
+
+**Goal**: Migrate TriageResult to Pydantic BaseModel (required for LangChain `with_structured_output()`), add file verification.
+
+### Changes
+- [ ] `app/pipeline/triage/agent.py` — TriageResult: frozen dataclass → Pydantic BaseModel, add `engine` field
+- [ ] `app/pipeline/triage/agent.py` — add `verify_files()`: check each `related_files` path exists in `settings.ecommerce_repo_path`
+- [ ] `app/pipeline/triage/agent.py` — call `verify_files()` post-triage in `run_triage()` before returning
+- [ ] Update tests that construct `TriageResult` directly
+
+---
+
+## Phase 19: LangChain Upgrade — Basic Engine (Pending)
+
+**Goal**: Upgrade the Basic (free) engine with structured output, model fallback, and knowledge context.
+
+### Changes
+- [ ] `app/pipeline/triage/langchain_provider.py` — use `with_structured_output(TriageResult)` instead of JSON parsing
+- [ ] Add `.with_fallbacks()` chain: Gemini Flash → Groq Llama
+- [ ] Pass KnowledgeLoader context (L0+L1+L2) instead of raw codebase string
+- [ ] Handle vision (Gemini supports image content blocks)
+
+---
+
+## Phase 20: Anthropic Upgrade — Premium Engine (Pending)
+
+**Goal**: Upgrade the Premium engine with progressive disclosure knowledge context.
+
+### Changes
+- [ ] `app/pipeline/triage/anthropic_provider.py` — pass KnowledgeLoader context (L0+L1+L2) instead of raw codebase
+- [ ] Keep existing tool_use pattern (already working well)
+
+---
+
+## Phase 21: Managed Agents — Experimental Engine (Pending)
+
+**Goal**: Replace the keyword stub with real Anthropic Managed Agents API.
+
+### Architecture
+```
+1. POST /v1/sessions           → create session (agent_id + environment_id)
+2. POST /v1/sessions/{sid}/events → send incident description
+3. Poll GET /v1/sessions/{sid}   → wait until status == "idle" (3-5 min)
+4. GET /v1/sessions/{sid}/events → extract agent.custom_tool_use (submit_triage)
+```
+
+### Changes
+- [ ] `app/pipeline/triage/managed_provider.py` — replace keyword stub with REST polling
+- [ ] `app/config.py` — add `managed_agent_id`, `managed_environment_id`
+- [ ] `docker-compose.yml` — add `MANAGED_AGENT_ID`, `MANAGED_ENVIRONMENT_ID` env vars
+- [ ] Beta header: `anthropic-beta: managed-agents-2026-04-01`
+- [ ] Timeout: 5 min max, fallback to anthropic provider on failure
+
+---
+
+## Phase 22: PII Detection (Pending)
+
+**Goal**: Detect PII in input (email, phone, CC, RUT), use for diagnosis, strip from all outputs.
+
+### New files
+- [ ] `app/pipeline/guardrail/pii.py` — `detect_pii()`, `sanitize_for_output()`, regex patterns
+
+### Changes
+- [ ] Call `detect_pii()` at intake in triage pipeline
+- [ ] Call `sanitize_for_output()` on all TriageResult text fields before returning
+- [ ] Pattern support: email, phone, credit card, Chilean RUT
+
+---
+
+## Dependency Graph (Phases 17-22)
+```
+Phase 17 (Knowledge) ──→ Phase 19 (LangChain upgrade)
+       │──→ Phase 20 (Anthropic upgrade)
+       └──→ Phase 21 (Managed Agents)
+Phase 18 (TriageResult + VERIFY) ──→ Phase 19
+Phase 22 (PII) — independent, can run anytime
+```
+
+---
+
 ## ECC Workflow Checklist
 
 For each remaining phase:
@@ -241,3 +352,4 @@ For each remaining phase:
 | `814c885` | 7 | Guardrails — injection, PII, rate limit |
 | `4155547` | 8 | Observability — OTel + Langfuse |
 | `bb7c312` | 11 | README (partial) |
+| `6079507` | 14+15+16 | Triagista dashboard, provider strategy, test updates |
