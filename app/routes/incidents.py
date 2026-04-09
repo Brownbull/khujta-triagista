@@ -274,11 +274,19 @@ async def triage_incident(
                 knowledge_loader=knowledge_loader,
             )
         triage_ms = (_time.monotonic() - t0) * 1000
-    except Exception:
+    except Exception as exc:
         logger.exception("Triage failed for incident %s", incident_id)
         incident.status = IncidentStatus.SUBMITTED  # revert status
         await db.commit()
-        raise HTTPException(status_code=502, detail="Triage agent failed")
+        # Surface the upstream error reason for the user
+        reason = str(exc)
+        if "503" in reason or "UNAVAILABLE" in reason or "high demand" in reason:
+            detail = "AI provider temporarily unavailable (high demand). Please try again or switch engines."
+        elif "401" in reason or "API key" in reason.lower():
+            detail = "API key invalid or missing. Check your configuration."
+        else:
+            detail = f"Triage agent failed: {reason[:200]}"
+        raise HTTPException(status_code=502, detail=detail)
 
     # Update incident with triage results
     incident.severity = triage_result.severity

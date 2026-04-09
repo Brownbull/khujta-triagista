@@ -165,9 +165,32 @@
         }, 800);
       })
       .catch(function(err) {
-        hideTriageProgress();
-        alert('Triage error: ' + err.message);
-        if (btn) { btn.disabled = false; btn.textContent = 'Run Triage'; }
+        // Show error in the progress overlay instead of alert
+        triageTimers.forEach(clearTimeout);
+        triageTimers = [];
+        var statusLabel = document.getElementById('triage-progress-status');
+        var fill = document.getElementById('triage-progress-fill');
+        var title = document.querySelector('.triage-progress-title');
+        if (title) title.textContent = 'Triage Failed';
+        if (fill) { fill.style.width = '100%'; fill.style.background = 'var(--red)'; }
+        // Mark current step as failed
+        triageSteps.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && el.classList.contains('active')) {
+            el.classList.remove('active');
+            el.style.color = 'var(--red)';
+          }
+        });
+        if (statusLabel) statusLabel.textContent = err.message;
+        // Auto-dismiss after 5s and redirect to the incident
+        setTimeout(function() {
+          hideTriageProgress();
+          if (fill) fill.style.background = '';
+          if (title) title.textContent = 'AI Triage in Progress';
+          if (btn) { btn.disabled = false; btn.textContent = 'Run Triage'; }
+          // If we came from submit, still redirect to the incident page
+          if (redirectUrl) window.location.href = redirectUrl;
+        }, 5000);
       });
   };
 
