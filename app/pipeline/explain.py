@@ -31,9 +31,15 @@ SEVERITY_LABELS = {
 RESPONSE_TIMES = {"P1": "15 minutes", "P2": "1 hour", "P3": "4 hours", "P4": "backlog"}
 
 
+def _sev(incident) -> str:
+    """Extract severity as plain string (handles both enum and str)."""
+    s = incident.severity
+    return s.value if hasattr(s, "value") else (s or "P3")
+
+
 def build_general(incident) -> str:
     """Layer 1 — General: any dev in the company can understand this."""
-    severity = incident.severity or "P3"
+    severity = _sev(incident)
     label, _ = SEVERITY_LABELS.get(severity, ("Unknown", ""))
     category = (incident.category or "other").replace("-", " ").title()
     team = (incident.suggested_assignee or "platform-team").replace("-team", "").capitalize()
@@ -82,7 +88,7 @@ def build_specialist(incident) -> str:
 
 def build_non_technical(incident) -> str:
     """Layer 3 — Non-technical: plain English for the reporter."""
-    severity = incident.severity or "P3"
+    severity = _sev(incident)
     _, impact = SEVERITY_LABELS.get(severity, ("", "the team is looking into it"))
     domain = DOMAIN_ANALOGIES.get(incident.category or "other", "the system")
     team = (incident.suggested_assignee or "platform-team").replace("-team", "").capitalize()

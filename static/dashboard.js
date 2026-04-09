@@ -6,7 +6,7 @@
 
   // ==================== SETTINGS ====================
   const STORAGE_KEY = 'sre-dashboard-settings';
-  const DEFAULTS = { theme: 'dark', fontSize: 'medium', font: 'IBM Plex Sans' };
+  const DEFAULTS = { theme: 'light', fontSize: 'medium', font: 'IBM Plex Sans' };
 
   function loadSettings() {
     try {
