@@ -37,6 +37,7 @@
 | **26. Responsive Layout** | Desktop portrait/landscape + mobile (<768px) | SHOULD | ✅ Done | `8242dcf` | — |
 | **27. Pipeline Tooltips** | Click pipeline dots → popup with stage details, auto-dismiss 5s | SHOULD | ✅ Done | — | — |
 | **28. Realistic Seed Data** | 12 incidents: mixed lifecycles, attachments, guardrail rejections + engine selector on detail page | MUST | ✅ Done | — | 80 |
+| **29. Langfuse Observability** | Trace failures + rejections, session_id/user_id, populate Sessions/Users tabs | SHOULD | ✅ Done | — | 82 |
 | **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 
 **Test total: 80 pytest + 16 Playwright E2E**

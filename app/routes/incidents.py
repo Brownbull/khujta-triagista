@@ -22,7 +22,12 @@ from app.pipeline.guardrail.rate_limit import check_rate_limit, record_submissio
 from app.pipeline.triage import run_triage
 from app.schemas.incident import IncidentCreate, IncidentListResponse, IncidentResponse
 from app.services.codebase_indexer import CodebaseIndex, search_files
-from app.services.observability import pipeline_span, trace_triage_pipeline
+from app.services.observability import (
+    pipeline_span,
+    trace_guardrail_rejection,
+    trace_triage_error,
+    trace_triage_pipeline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +78,13 @@ async def create_incident(
     with pipeline_span("guardrail", {"reporter": data.reporter_email}):
         guardrail = validate_input(data.description)
     if guardrail.rejected:
+        trace_guardrail_rejection(
+            description=data.description,
+            injection_score=guardrail.injection_score,
+            flags=guardrail.flags,
+            rejection_reason=guardrail.rejection_reason,
+            reporter_email=data.reporter_email,
+        )
         raise HTTPException(status_code=400, detail=guardrail.rejection_reason)
 
     # Record submission for rate limiting
@@ -286,6 +298,14 @@ async def triage_incident(
             detail = "API key invalid or missing. Check your configuration."
         else:
             detail = f"Triage agent failed: {reason[:200]}"
+        trace_triage_error(
+            str(incident_id),
+            stage="triage-generation",
+            error=reason[:500],
+            description=incident.description,
+            session_id=str(incident_id),
+            user_id=incident.reporter_email,
+        )
         raise HTTPException(status_code=502, detail=detail)
 
     # Update incident with triage results
@@ -345,6 +365,8 @@ async def triage_incident(
             "chat_sent": dispatch_result.chat_sent,
             "chat_channel": dispatch_result.chat_channel,
         },
+        session_id=str(incident_id),
+        user_id=incident.reporter_email,
     )
 
     await db.refresh(incident)

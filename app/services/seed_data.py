@@ -772,17 +772,20 @@ def seed_langfuse_traces(incidents: list[Incident]) -> None:
 
     Creates the same trace structure as the live triage pipeline:
     guardrail -> context-retrieval -> triage-generation -> dispatch
-    Only seeds traces for triaged incidents (not rejected/untriaged).
+    Also seeds rejection traces for guardrail-blocked incidents.
     """
-    from app.services.observability import trace_triage_pipeline
+    from app.services.observability import trace_guardrail_rejection, trace_triage_pipeline
 
     model = "claude-haiku-4-5-20251001"
     triage_meta = {d["reporter_email"]: d for d in SEED_INCIDENTS}
 
     seeded = 0
     for incident in incidents:
-        # Skip non-triaged incidents
-        if incident.status in (IncidentStatus.REJECTED, IncidentStatus.SUBMITTED):
+        # Skip untriaged
+        if incident.status == IncidentStatus.SUBMITTED:
+            continue
+        # Skip rejected (handled below)
+        if incident.status == IncidentStatus.REJECTED:
             continue
 
         meta = triage_meta.get(incident.reporter_email)
@@ -837,7 +840,23 @@ def seed_langfuse_traces(incidents: list[Incident]) -> None:
                 "chat_sent": True,
                 "chat_channel": "#incidents",
             },
+            session_id=str(incident.id),
+            user_id=incident.reporter_email,
         )
         seeded += 1
 
-    logger.info("Langfuse pipeline traces seeded: %d incidents", seeded)
+    # Seed rejection traces for guardrail-blocked incidents
+    rejected = 0
+    for incident in incidents:
+        if incident.status != IncidentStatus.REJECTED:
+            continue
+        trace_guardrail_rejection(
+            description=incident.description[:500],
+            injection_score=incident.injection_score or 0.0,
+            flags=(incident.validation_flags or {}).get("flags", []),
+            rejection_reason=f"Input rejected: injection score {(incident.injection_score or 0) * 100:.0f}%",
+            reporter_email=incident.reporter_email,
+        )
+        rejected += 1
+
+    logger.info("Langfuse traces seeded: %d pipeline + %d rejections", seeded, rejected)

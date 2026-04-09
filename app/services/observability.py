@@ -4,6 +4,7 @@ Instruments FastAPI, SQLAlchemy, and HTTPX automatically.
 Provides custom span helpers for pipeline stages.
 """
 
+import json
 import logging
 from contextlib import contextmanager
 from typing import Any
@@ -121,43 +122,198 @@ def get_langfuse():
         return None
 
 
-def trace_llm_call(
+def trace_triage_pipeline(
     incident_id: str,
-    model: str,
-    input_text: str,
-    output_data: dict[str, Any],
-    tokens_in: int,
-    tokens_out: int,
-    duration_ms: float,
+    *,
+    guardrail: dict[str, Any],
+    context_retrieval: dict[str, Any],
+    generation: dict[str, Any],
+    dispatch: dict[str, Any],
+    session_id: str | None = None,
+    user_id: str | None = None,
 ) -> None:
-    """Record an LLM call in Langfuse for observability."""
+    """Record the full triage pipeline as a multi-span Langfuse trace.
+
+    Creates a parent trace with 4 child spans:
+      guardrail → context-retrieval → triage-generation → dispatch
+
+    Each span carries stage-specific metadata so the Langfuse dashboard
+    shows the complete decision pipeline, not just the LLM call.
+    """
     langfuse = get_langfuse()
     if langfuse is None:
         return
 
     try:
-        langfuse_trace = langfuse.trace(
-            name="incident-triage",
-            metadata={"incident_id": incident_id, "model": model},
+        lf_trace = langfuse.trace(
+            name="incident-triage-pipeline",
+            session_id=session_id or incident_id,
+            user_id=user_id,
+            metadata={
+                "incident_id": incident_id,
+                "model": generation.get("model", "unknown"),
+                "severity": generation.get("severity"),
+                "category": generation.get("category"),
+                "confidence": generation.get("confidence"),
+            },
+            tags=[
+                generation.get("severity", "?"),
+                generation.get("category", "?"),
+            ],
         )
-        langfuse_trace.generation(
+
+        # 1. Guardrail span
+        lf_trace.span(
+            name="guardrail",
+            input=guardrail.get("description", "")[:500],
+            output=json.dumps({
+                "passed": guardrail.get("passed"),
+                "injection_score": guardrail.get("injection_score"),
+                "flags": guardrail.get("flags"),
+            }, default=str),
+            metadata=guardrail,
+        )
+
+        # 2. Context retrieval span
+        lf_trace.span(
+            name="context-retrieval",
+            input=f"Search query: {context_retrieval.get('search_query', '')[:200]}",
+            output=json.dumps({
+                "files_found": context_retrieval.get("files_found"),
+                "files_searched": [
+                    f.get("path", "") for f in context_retrieval.get("files", [])
+                ],
+            }, default=str),
+            metadata=context_retrieval,
+        )
+
+        # 3. Triage generation (the LLM call)
+        lf_trace.generation(
             name="triage-generation",
-            model=model,
-            input=input_text[:2000],  # cap to avoid huge payloads
-            output=str(output_data)[:2000],
+            model=generation.get("model", "unknown"),
+            input=generation.get("input", "")[:2000],
+            output=generation.get("output", "")[:2000],
             usage={
-                "input": tokens_in,
-                "output": tokens_out,
-                "total": tokens_in + tokens_out,
+                "input": generation.get("tokens_in", 0),
+                "output": generation.get("tokens_out", 0),
+                "total": generation.get("tokens_in", 0) + generation.get("tokens_out", 0),
             },
             metadata={
                 "incident_id": incident_id,
-                "severity": output_data.get("severity"),
-                "category": output_data.get("category"),
-                "confidence": output_data.get("confidence"),
-                "duration_ms": duration_ms,
+                "severity": generation.get("severity"),
+                "category": generation.get("category"),
+                "confidence": generation.get("confidence"),
+                "duration_ms": generation.get("duration_ms"),
+                "affected_component": generation.get("affected_component"),
+                "suggested_assignee": generation.get("suggested_assignee"),
             },
         )
+
+        # 4. Dispatch span
+        lf_trace.span(
+            name="dispatch",
+            input=json.dumps({
+                "severity": generation.get("severity"),
+                "suggested_assignee": generation.get("suggested_assignee"),
+            }, default=str),
+            output=json.dumps({
+                "ticket_id": dispatch.get("ticket_id"),
+                "email_sent": dispatch.get("email_sent"),
+                "chat_sent": dispatch.get("chat_sent"),
+            }, default=str),
+            metadata=dispatch,
+        )
+
         langfuse.flush()
+        logger.info("Langfuse pipeline trace recorded for incident %s", incident_id[:8])
     except Exception:
-        logger.warning("Langfuse trace failed", exc_info=True)
+        logger.warning("Langfuse pipeline trace failed", exc_info=True)
+
+
+def trace_triage_error(
+    incident_id: str,
+    *,
+    stage: str,
+    error: str,
+    description: str = "",
+    session_id: str | None = None,
+    user_id: str | None = None,
+) -> None:
+    """Record a failed triage attempt as a Langfuse trace with error status."""
+    langfuse = get_langfuse()
+    if langfuse is None:
+        return
+
+    try:
+        lf_trace = langfuse.trace(
+            name="incident-triage-error",
+            session_id=session_id or incident_id,
+            user_id=user_id,
+            metadata={
+                "incident_id": incident_id,
+                "failed_stage": stage,
+                "error": error[:500],
+            },
+            tags=["error", stage],
+            input=description[:500],
+            output=error[:500],
+        )
+
+        lf_trace.span(
+            name=stage,
+            input=description[:500],
+            output=json.dumps({"error": error[:500]}, default=str),
+            metadata={"status": "error", "error": error[:500]},
+            level="ERROR",
+        )
+
+        langfuse.flush()
+        logger.info("Langfuse error trace recorded for incident %s (stage=%s)", incident_id[:8], stage)
+    except Exception:
+        logger.warning("Langfuse error trace failed", exc_info=True)
+
+
+def trace_guardrail_rejection(
+    *,
+    description: str,
+    injection_score: float,
+    flags: list[str],
+    rejection_reason: str | None = None,
+    reporter_email: str | None = None,
+) -> None:
+    """Record a guardrail rejection as a Langfuse trace."""
+    langfuse = get_langfuse()
+    if langfuse is None:
+        return
+
+    try:
+        lf_trace = langfuse.trace(
+            name="guardrail-rejection",
+            user_id=reporter_email,
+            metadata={
+                "injection_score": injection_score,
+                "flags": flags,
+                "rejection_reason": rejection_reason,
+            },
+            tags=["rejected", "guardrail"],
+            input=description[:500],
+            output=rejection_reason or "Rejected by guardrail",
+        )
+
+        lf_trace.span(
+            name="guardrail",
+            input=description[:500],
+            output=json.dumps({
+                "passed": False,
+                "injection_score": injection_score,
+                "flags": flags,
+                "rejection_reason": rejection_reason,
+            }, default=str),
+            metadata={"status": "rejected"},
+            level="WARNING",
+        )
+
+        langfuse.flush()
+        logger.info("Langfuse guardrail rejection trace recorded (score=%.2f)", injection_score)
+    except Exception:
+        logger.warning("Langfuse guardrail rejection trace failed", exc_info=True)
