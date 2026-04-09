@@ -147,4 +147,24 @@
     if (e.key === 'Escape') window.closeResolveDialog();
   });
 
+  // ==================== MOBILE SIDEBAR ====================
+  window.toggleSidebar = function() {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  };
+
+  window.closeSidebar = function() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  };
+
+  // ==================== EXPLANATION TABS ====================
+  window.switchExplainTab = function(tab, btn) {
+    document.querySelectorAll('.explain-content').forEach(function(c) { c.classList.remove('active'); });
+    document.querySelectorAll('.explain-tab').forEach(function(t) { t.classList.remove('active'); });
+    var el = document.getElementById('explain-' + tab);
+    if (el) el.classList.add('active');
+    if (btn) btn.classList.add('active');
+  };
+
 })();

@@ -560,3 +560,87 @@ html.light .dispatch-chat-card { background: rgba(0,0,0,0.04); }
   white-space: pre-wrap; max-height: 200px; overflow-y: auto;
 }
 html.light .dispatch-body { background: rgba(0,0,0,0.04); }
+
+/* ======================== EXPLANATION LAYERS ======================== */
+.explain-tabs { display: flex; gap: 2px; background: rgba(255,255,255,0.04); border-radius: 4px; padding: 2px; }
+.explain-tab {
+  font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 3px;
+  color: var(--text-dim); cursor: pointer; border: none; background: none;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  transition: all 0.2s var(--spring);
+}
+.explain-tab:hover { color: var(--text); }
+.explain-tab.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+.explain-content { display: none; }
+.explain-content.active { display: block; animation: viewIn 0.25s var(--spring) both; }
+.explain-text {
+  font-family: var(--sans); font-size: 12px; line-height: 1.7;
+  color: var(--text-dim); white-space: pre-wrap; margin: 0;
+}
+
+/* ======================== RESPONSIVE LAYOUT ======================== */
+
+/* Hamburger toggle (hidden on desktop) */
+.sidebar-toggle {
+  display: none; width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+  cursor: pointer; align-items: center; justify-content: center;
+  transition: all 0.2s var(--spring); flex-shrink: 0; margin-right: 8px;
+}
+.sidebar-toggle:hover { background: var(--panel); color: var(--text); }
+.sidebar-toggle svg { width: 16px; height: 16px; }
+
+/* Desktop portrait (768-1023px) — sidebar collapses to icons */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .sidebar { width: 56px; }
+  .sidebar-logo { padding: 16px 12px; font-size: 0; gap: 0; justify-content: center; }
+  .sidebar-logo img { width: 24px; height: 24px; }
+  .sidebar-section-label { display: none; }
+  .sidebar-item { padding: 10px 0; justify-content: center; font-size: 0; gap: 0; }
+  .sidebar-item svg { width: 20px; height: 20px; opacity: 0.8; }
+  .sidebar-divider { margin: 8px 8px; }
+  .incident-mini { display: none; }
+  .sidebar-footer { display: none; }
+}
+
+/* Mobile (<768px) — sidebar hidden, hamburger toggle */
+@media (max-width: 767px) {
+  .sidebar-toggle { display: flex; }
+
+  .sidebar {
+    position: fixed; left: -240px; top: 0; bottom: 0; z-index: 100;
+    width: 240px; transition: left 0.3s var(--spring);
+    box-shadow: none;
+  }
+  .sidebar.open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.3); }
+
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; z-index: 99;
+    background: rgba(0,0,0,0.4);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* Content adjustments */
+  .content { padding: 12px; }
+  .compact-grid { grid-template-columns: 1fr; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .pipeline-progress { flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .pipeline-line { display: none; }
+  .pipeline-step { min-width: 50px; }
+  .dispatch-chat { grid-template-columns: 1fr; }
+
+  /* Topbar adjustments */
+  .topbar { padding: 0 12px; gap: 6px; flex-wrap: wrap; height: auto; min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
+  .view-tabs { margin-left: 0; }
+  .topbar-actions { margin-left: 0; }
+
+  /* Chat timeline */
+  .chat-timeline { max-width: 100%; }
+  .msg-body { max-width: 85%; }
+
+  /* Search bar */
+  .search-bar { max-width: 100%; }
+
+  /* Submit form */
+  .provider-cards { grid-template-columns: 1fr; }
+}

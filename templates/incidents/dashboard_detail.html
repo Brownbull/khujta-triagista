@@ -129,6 +129,31 @@
     </div>
   </div>
 
+  {% if explanations %}
+  <!-- Explanation Layers -->
+  <div class="panel" style="margin-top: 12px;" data-testid="explanation-layers">
+    <div class="panel-header">
+      Explanation Layers
+      <div class="explain-tabs">
+        <button class="explain-tab active" onclick="switchExplainTab('general', this)">General</button>
+        <button class="explain-tab" onclick="switchExplainTab('specialist', this)">Specialist</button>
+        <button class="explain-tab" onclick="switchExplainTab('non_technical', this)">Non-Technical</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="explain-content active" id="explain-general">
+        <pre class="explain-text">{{ explanations.general }}</pre>
+      </div>
+      <div class="explain-content" id="explain-specialist">
+        <pre class="explain-text">{{ explanations.specialist }}</pre>
+      </div>
+      <div class="explain-content" id="explain-non_technical">
+        <pre class="explain-text">{{ explanations.non_technical }}</pre>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {% if incident.related_files or incident.recommended_actions %}
   <!-- Related Files + Actions -->
   <div class="compact-grid" style="margin-top: 12px;">

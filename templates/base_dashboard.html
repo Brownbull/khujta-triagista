@@ -58,11 +58,17 @@
   <div class="sidebar-footer">v0.1.0 &bull; {{ triage_provider|default('anthropic') }}</div>
 </aside>
 
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <!-- ======================== MAIN ======================== -->
 <div class="main">
 
   <!-- Top bar -->
   <div class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
     {% block topbar %}
     <span class="topbar-id" data-testid="topbar-title">All Incidents</span>
     {% endblock %}

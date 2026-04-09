@@ -167,11 +167,18 @@ async def incident_detail_page(
 
     template = "incidents/dashboard_chat.html" if view == "chat" else "incidents/dashboard_detail.html"
 
+    # Build explanation layers for triaged incidents
+    explanations = None
+    if incident.severity:
+        from app.pipeline.explain import build_explanations
+        explanations = build_explanations(incident)
+
     return templates.TemplateResponse(
         request,
         template,
         context={
             **_base_context("detail", recent),
             "incident": incident,
+            "explanations": explanations,
         },
     )
