@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRE Triage Agent — Swiss Modernism</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #FFFFFF;
+  --text: #000000;
+  --text-secondary: #555555;
+  --text-muted: #999999;
+  --accent: #0047FF;
+  --red: #FF0000;
+  --grid-line: #EBEBEB;
+  --unit: 8px;
+  --font: 'Inter', Helvetica, Arial, sans-serif;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+
+/* 12-column grid visible */
+.grid-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  max-width: 1152px; margin: 0 auto; padding: 0 calc(var(--unit)*3);
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: calc(var(--unit)*2);
+  pointer-events: none; z-index: -1;
+}
+.grid-overlay div { background: rgba(0,71,255,0.02); }
+
+/* Container: strict 12-col */
+.container {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0 calc(var(--unit)*3);
+}
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: calc(var(--unit)*2);
+}
+
+/* Nav */
+.navbar {
+  border-bottom: 2px solid var(--text);
+  padding: calc(var(--unit)*2) 0;
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.logo { font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; text-decoration: none; color: var(--text); }
+.nav-links { display: flex; gap: calc(var(--unit)*4); }
+.nav-links a { text-decoration: none; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); }
+.nav-links a.active { color: var(--accent); }
+
+/* Hero section — oversized type */
+.hero {
+  grid-column: 1 / -1;
+  padding: calc(var(--unit)*8) 0 calc(var(--unit)*4);
+  border-bottom: 1px solid var(--grid-line);
+}
+.hero-overline {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px;
+  color: var(--accent); margin-bottom: calc(var(--unit)*2);
+}
+.hero h1 {
+  font-size: clamp(36px, 5vw, 72px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  max-width: 8ch;
+}
+.hero-meta {
+  margin-top: calc(var(--unit)*3);
+  display: flex; gap: calc(var(--unit)*4); align-items: center;
+}
+.hero-badges { display: flex; gap: calc(var(--unit)*1); }
+.badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  padding: 4px 12px; border: 2px solid;
+}
+.badge-status { border-color: var(--accent); color: var(--accent); }
+.badge-sev { border-color: var(--red); color: var(--red); }
+.badge-team { border-color: var(--text); color: var(--text); }
+.hero-actions { display: flex; gap: calc(var(--unit)*1); }
+.btn {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  padding: 8px 20px; border: 2px solid var(--text); cursor: pointer; transition: all 0.15s;
+}
+.btn-default { background: var(--bg); color: var(--text); }
+.btn-default:hover { background: var(--text); color: var(--bg); }
+.btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Section */
+.section {
+  padding: calc(var(--unit)*6) 0;
+  border-bottom: 1px solid var(--grid-line);
+}
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px;
+  color: var(--text-muted); margin-bottom: calc(var(--unit)*3);
+}
+
+/* Asymmetric layouts */
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-12 { grid-column: span 12; }
+.col-start-4 { grid-column-start: 4; }
+.col-start-5 { grid-column-start: 5; }
+.col-start-6 { grid-column-start: 6; }
+.col-start-9 { grid-column-start: 9; }
+
+/* Type scale */
+.text-xl { font-size: 24px; font-weight: 700; line-height: 1.3; letter-spacing: -0.5px; }
+.text-body { font-size: 15px; line-height: 1.8; color: var(--text-secondary); }
+.text-small { font-size: 12px; color: var(--text-muted); }
+.text-mono { font-family: 'Inter', monospace; font-size: 13px; letter-spacing: -0.3px; }
+
+/* Data cells — strict borders */
+.data-cells {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 2px solid var(--text);
+}
+.data-cell {
+  padding: calc(var(--unit)*3);
+  border-right: 1px solid var(--grid-line);
+  text-align: center;
+}
+.data-cell:last-child { border-right: none; }
+.data-cell .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-bottom: calc(var(--unit)*1); }
+.data-cell .value { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+.data-cell .value.red { color: var(--red); }
+.data-cell .value.blue { color: var(--accent); }
+.data-cell .sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* File list — clean table */
+.file-table { width: 100%; border-collapse: collapse; }
+.file-table th {
+  text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--text-muted);
+  padding: calc(var(--unit)*1) 0; border-bottom: 2px solid var(--text);
+}
+.file-table td {
+  padding: calc(var(--unit)*1.5) 0;
+  border-bottom: 1px solid var(--grid-line);
+  font-size: 13px;
+}
+.file-table .path { font-family: 'Inter', monospace; color: var(--accent); font-weight: 500; }
+
+/* Numbered list — Swiss precision */
+.swiss-list { list-style: none; counter-reset: swiss; }
+.swiss-list li {
+  counter-increment: swiss;
+  padding: calc(var(--unit)*2) 0;
+  border-bottom: 1px solid var(--grid-line);
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: calc(var(--unit)*2);
+  font-size: 14px;
+}
+.swiss-list li::before {
+  content: counter(swiss, decimal-leading-zero);
+  font-size: 24px; font-weight: 900; color: var(--accent);
+  line-height: 1;
+}
+
+/* Dispatch — three equal columns with heavy top border */
+.dispatch-cols {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-top: 4px solid var(--text);
+}
+.dispatch-col {
+  padding: calc(var(--unit)*3) calc(var(--unit)*2);
+  border-right: 1px solid var(--grid-line);
+}
+.dispatch-col:last-child { border-right: none; }
+.dispatch-col .d-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); }
+.dispatch-col .d-value { font-size: 14px; font-weight: 600; margin-top: 4px; }
+.dispatch-col .d-status { font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Footer */
+.footer {
+  padding: calc(var(--unit)*4) 0;
+  border-top: 2px solid var(--text);
+  margin-top: calc(var(--unit)*8);
+  font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 3px;
+  display: flex; justify-content: space-between;
+}
+</style>
+</head>
+<body>
+
+<!-- Grid overlay -->
+<div class="grid-overlay"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+
+<div class="container">
+
+  <!-- Nav -->
+  <nav class="navbar">
+    <a href="#" class="logo">SRE Triage</a>
+    <div class="nav-links">
+      <a href="#" class="active">Incidents</a>
+      <a href="#">Report</a>
+      <a href="#">API</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="grid-12">
+    <div class="hero col-12">
+      <div class="grid-12">
+        <div class="col-7">
+          <div class="hero-overline">INC-8b79e124</div>
+          <h1>Payment Gateway Outage</h1>
+        </div>
+        <div class="col-5" style="display: flex; flex-direction: column; justify-content: flex-end;">
+          <div class="hero-badges">
+            <span class="badge badge-status">Dispatched</span>
+            <span class="badge badge-sev">P1 Critical</span>
+            <span class="badge badge-team">Payments</span>
+          </div>
+          <div class="hero-actions" style="margin-top: 12px;">
+            <button class="btn btn-default">Acknowledge</button>
+            <button class="btn btn-accent">Resolve</button>
+          </div>
+          <div class="text-small" style="margin-top: 12px;">
+            Reported by sre-oncall@example.com<br>April 8, 2026 &mdash; 14:32 UTC
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Description: asymmetric -->
+  <div class="section">
+    <div class="grid-12">
+      <div class="col-3">
+        <div class="section-label">Description</div>
+      </div>
+      <div class="col-9">
+        <p class="text-body">Payment gateway returning HTTP 502 errors during checkout. All customers affected since 14:30 UTC. Stripe webhook handler appears to be timing out. Error rate jumped from 0.1% to 45%. Checkout completion rate dropped to near zero.</p>
+        <p class="text-small" style="margin-top: 8px;">Security: Injection 2% &mdash; Clean</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data cells -->
+  <div class="section" style="padding-bottom: 0;">
+    <div class="section-label">Triage Assessment</div>
+    <div class="data-cells">
+      <div class="data-cell">
+        <div class="label">Severity</div>
+        <div class="value red">P1</div>
+        <div class="sub">Critical</div>
+      </div>
+      <div class="data-cell">
+        <div class="label">Confidence</div>
+        <div class="value blue">85%</div>
+        <div class="sub">AI certainty</div>
+      </div>
+      <div class="data-cell">
+        <div class="label">Category</div>
+        <div class="value" style="font-size: 18px;">Payment</div>
+        <div class="sub">Processing</div>
+      </div>
+      <div class="data-cell">
+        <div class="label">Component</div>
+        <div class="value" style="font-size: 13px; font-weight: 600;">StripeCreditCard</div>
+        <div class="sub">Spree::PaymentMethod</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root Cause: asymmetric -->
+  <div class="section">
+    <div class="grid-12">
+      <div class="col-3">
+        <div class="section-label">Root Cause</div>
+      </div>
+      <div class="col-9">
+        <p class="text-body">The Stripe webhook endpoint is experiencing upstream latency causing timeout cascade. The payment gateway connection pool may be exhausted due to retries on failed webhook deliveries.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Files + Actions: side by side -->
+  <div class="section">
+    <div class="grid-12">
+      <div class="col-6">
+        <div class="section-label">Related Files</div>
+        <table class="file-table">
+          <thead><tr><th>Path</th><th>Context</th></tr></thead>
+          <tbody>
+            <tr><td class="path">spree/payment.rb</td><td>payment processing</td></tr>
+            <tr><td class="path">spree/payment_method.rb</td><td>gateway interface</td></tr>
+            <tr><td class="path">api/payments_controller.rb</td><td>payment API</td></tr>
+            <tr><td class="path">spree/order.rb</td><td>checkout flow</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col-6">
+        <div class="section-label">Recommended Actions</div>
+        <ol class="swiss-list">
+          <li>Check Stripe API status page</li>
+          <li>Review timeout configuration</li>
+          <li>Inspect webhook handler logs</li>
+          <li>Enable circuit breaker</li>
+          <li>Verify connection pool settings</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dispatch -->
+  <div class="section" style="border: none;">
+    <div class="section-label">Dispatch</div>
+    <div class="dispatch-cols">
+      <div class="dispatch-col">
+        <div class="d-label">Ticket</div>
+        <div class="d-value">Payments Team</div>
+        <div class="d-status">Created</div>
+      </div>
+      <div class="dispatch-col">
+        <div class="d-label">Email</div>
+        <div class="d-value">payments-oncall@example.com</div>
+        <div class="d-status">Sent</div>
+      </div>
+      <div class="dispatch-col">
+        <div class="d-label">Chat</div>
+        <div class="d-value">#incidents</div>
+        <div class="d-status">Delivered</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>AgentX Hackathon 2026</span>
+    <span>SRE Triage Agent &mdash; Swiss Modernism</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

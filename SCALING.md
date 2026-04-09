@@ -4,10 +4,13 @@
 
 The SRE Triage Agent runs as a single Docker Compose stack:
 
-```
-Browser → FastAPI (1 worker) → PostgreSQL → Claude API (external)
-                                          → Langfuse (local)
-                                          → Redis (cache/rate limits)
+```mermaid
+graph LR
+    Browser["Browser"] --> FastAPI["FastAPI<br/>(1 worker)"]
+    FastAPI --> PG[("PostgreSQL")]
+    FastAPI --> Claude["Claude API<br/>(external)"]
+    FastAPI --> LF["Langfuse<br/>(local)"]
+    FastAPI --> Redis[("Redis<br/>(rate limits)")]
 ```
 
 ### Current Capacity
@@ -41,26 +44,21 @@ command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--workers", "4"]
 
 **Effort: Medium | Impact: 100-500 concurrent users**
 
-```
-                    ┌──────────────┐
-                    │ Load Balancer│
-                    │ (nginx/ALB)  │
-                    └──────┬───────┘
-                 ┌─────────┼─────────┐
-              ┌──▼──┐   ┌──▼──┐   ┌──▼──┐
-              │App 1│   │App 2│   │App 3│
-              └──┬──┘   └──┬──┘   └──┬──┘
-                 └─────────┼─────────┘
-                    ┌──────▼───────┐
-                    │  PostgreSQL  │
-                    │  (primary)   │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │    Redis     │
-                    │ (rate limits │
-                    │  + sessions) │
-                    └──────────────┘
+```mermaid
+graph TB
+    LB["Load Balancer<br/>(nginx / ALB)"]
+    LB --> App1["App 1"]
+    LB --> App2["App 2"]
+    LB --> App3["App 3"]
+    App1 --> PG[("PostgreSQL<br/>(primary)")]
+    App2 --> PG
+    App3 --> PG
+    App1 --> Redis[("Redis<br/>(rate limits + sessions)")]
+    App2 --> Redis
+    App3 --> Redis
+    App1 --> S3["S3 / NFS<br/>(shared uploads)"]
+    App2 --> S3
+    App3 --> S3
 ```
 
 Changes required:
@@ -74,28 +72,29 @@ Changes required:
 
 **Effort: High | Impact: 1000+ incidents/hour**
 
-```
-              ┌─────────┐
-              │   API   │ ← accepts incidents, returns immediately
-              └────┬────┘
-                   │
-              ┌────▼────┐
-              │  Queue   │ ← Redis Streams / SQS / RabbitMQ
-              │(triage)  │
-              └────┬────┘
-           ┌───────┼───────┐
-        ┌──▼──┐ ┌──▼──┐ ┌──▼──┐
-        │Wkr 1│ │Wkr 2│ │Wkr 3│  ← triage workers (call Claude)
-        └──┬──┘ └──┬──┘ └──┬──┘
-           └───────┼───────┘
-              ┌────▼────┐
-              │  Queue   │ ← dispatch queue
-              │(dispatch)│
-              └────┬────┘
-              ┌────▼────┐
-              │Dispatch  │ ← ticket + notification workers
-              │ Workers  │
-              └──────────┘
+```mermaid
+graph TB
+    API["API Gateway<br/>(accepts + returns immediately)"]
+    TQ[("Triage Queue<br/>(Redis Streams / SQS)")]
+    DQ[("Dispatch Queue")]
+
+    API --> TQ
+
+    TQ --> W1["Triage Worker 1"]
+    TQ --> W2["Triage Worker 2"]
+    TQ --> W3["Triage Worker 3"]
+
+    W1 --> Claude["Claude API"]
+    W2 --> Claude
+    W3 --> Claude
+
+    W1 --> DQ
+    W2 --> DQ
+    W3 --> DQ
+
+    DQ --> D1["Dispatch Worker<br/>(ticket + notifications)"]
+    D1 --> PG[("PostgreSQL")]
+    API --> PG
 ```
 
 Changes required:

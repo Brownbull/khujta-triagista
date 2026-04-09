@@ -4,3 +4,4 @@ async def test_health_returns_ok(client):
     body = resp.json()
     assert body["status"] == "ok"
     assert body["service"] == "sre-triage-agent"
+    assert body["database"] == "connected"

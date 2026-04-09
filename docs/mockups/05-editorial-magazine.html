@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRE Triage Agent — Editorial Magazine</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #FAFAF8;
+  --card: #FFFFFF;
+  --text: #1A1A1A;
+  --text-body: #3D3D3D;
+  --text-muted: #8C8C8C;
+  --accent: #C41E3A;
+  --accent-light: #FFF0F2;
+  --rule: #E0E0E0;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Source Sans 3', -apple-system, sans-serif;
+  --mono: 'Source Code Pro', monospace;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.7; }
+
+/* Nav — thin editorial bar */
+.navbar {
+  border-bottom: 1px solid var(--rule);
+  padding: 0 3rem; height: 50px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--bg); z-index: 100;
+}
+.logo { font-family: var(--serif); font-weight: 900; font-size: 18px; color: var(--text); text-decoration: none; letter-spacing: -0.5px; }
+.logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 2rem; }
+.nav-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
+.nav-links a.active { color: var(--accent); }
+
+.container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+
+/* Masthead — big editorial header */
+.masthead {
+  text-align: center;
+  padding: 2rem 0 2.5rem;
+  border-bottom: 3px double var(--rule);
+  margin-bottom: 2.5rem;
+}
+.masthead-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); margin-bottom: 0.5rem; }
+.masthead h1 {
+  font-family: var(--serif); font-weight: 900; font-size: 42px; line-height: 1.15;
+  letter-spacing: -1px; margin-bottom: 0.75rem;
+}
+.masthead-meta { color: var(--text-muted); font-size: 14px; }
+.masthead-meta strong { color: var(--text); font-weight: 600; }
+
+/* Badge bar */
+.badge-bar {
+  display: flex; justify-content: center; gap: 0.75rem; margin-top: 1.25rem;
+}
+.badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  padding: 4px 14px; border-radius: 2px;
+}
+.badge-dispatched { background: #EFF6FF; color: #2563EB; }
+.badge-p1 { background: var(--accent); color: #fff; }
+.badge-team { background: #FFF7ED; color: #C2410C; }
+
+/* Actions */
+.action-bar {
+  display: flex; justify-content: center; gap: 0.75rem; margin-top: 1rem;
+}
+.btn { font-family: var(--sans); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 20px; border: 2px solid; cursor: pointer; transition: all 0.2s; }
+.btn-outline { background: transparent; color: var(--text); border-color: var(--rule); }
+.btn-outline:hover { border-color: var(--text); }
+.btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-accent:hover { background: #A31830; }
+
+/* Section headers */
+.section-rule { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0 2rem; }
+.section-header {
+  font-family: var(--serif); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted);
+  margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;
+}
+.section-header::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+/* Two-column editorial */
+.two-col {
+  column-count: 2;
+  column-gap: 2.5rem;
+  column-rule: 1px solid var(--rule);
+}
+.two-col p { font-size: 15px; color: var(--text-body); margin-bottom: 1rem; text-align: justify; }
+
+/* Drop cap */
+.drop-cap::first-letter {
+  font-family: var(--serif);
+  float: left;
+  font-size: 4.5em;
+  line-height: 0.8;
+  margin: 0 12px 0 0;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+/* Pull quote */
+.pull-quote {
+  break-inside: avoid;
+  margin: 1.5rem 0;
+  padding: 1.25rem 0;
+  border-top: 3px solid var(--accent);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text);
+}
+.pull-quote-attr { font-family: var(--sans); font-size: 12px; font-style: normal; color: var(--text-muted); margin-top: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Data cards — inset boxes */
+.data-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Triage data grid */
+.triage-data {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-bottom: 2rem;
+}
+.triage-cell {
+  background: var(--card);
+  padding: 1.25rem;
+  text-align: center;
+}
+.triage-cell .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 0.5rem; }
+.triage-cell .value { font-family: var(--serif); font-size: 22px; font-weight: 700; }
+.triage-cell .sub { font-size: 11px; color: var(--text-muted); margin-top: 0.25rem; }
+
+/* File list editorial */
+.file-list {
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+.file-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.file-path { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.file-tag { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+/* Numbered actions */
+.actions-editorial { list-style: none; counter-reset: ed; }
+.actions-editorial li {
+  counter-increment: ed;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  display: flex; gap: 1rem; font-size: 14px; color: var(--text-body);
+}
+.actions-editorial li::before {
+  content: counter(ed);
+  font-family: var(--serif); font-size: 24px; font-weight: 900;
+  color: var(--accent); min-width: 28px;
+}
+
+/* Dispatch as sidebar boxes */
+.dispatch-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.dispatch-box {
+  border: 1px solid var(--rule); padding: 1rem; text-align: center;
+}
+.dispatch-box .icon { font-size: 24px; margin-bottom: 0.5rem; }
+.dispatch-box .title { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+.dispatch-box .sub { font-size: 12px; color: var(--text-muted); margin-top: 0.25rem; }
+.dispatch-box .status { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem; }
+
+/* Footer */
+.footer {
+  margin-top: 3rem; padding: 2rem; text-align: center;
+  border-top: 3px double var(--rule);
+  font-size: 12px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="#" class="logo">SRE <span>Triage</span></a>
+  <div class="nav-links">
+    <a href="#" class="active">Incidents</a>
+    <a href="#">Report</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- Masthead -->
+  <div class="masthead">
+    <div class="masthead-category">Incident Report</div>
+    <h1>Payment Gateway Outage<br>Affects All Customers</h1>
+    <div class="masthead-meta">
+      Reported by <strong>SRE On-Call Engineer</strong> &mdash; April 8, 2026 at 14:32 UTC
+    </div>
+    <div class="badge-bar">
+      <span class="badge badge-dispatched">Dispatched</span>
+      <span class="badge badge-p1">P1 Critical</span>
+      <span class="badge badge-team">Payments Team</span>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-outline">Acknowledge</button>
+      <button class="btn btn-accent">Resolve</button>
+    </div>
+  </div>
+
+  <!-- Description — editorial two-column -->
+  <div class="section-header">The Report</div>
+  <div class="two-col">
+    <p class="drop-cap">Payment gateway returning HTTP 502 errors during checkout. All customers affected since 14:30 UTC. Stripe webhook handler appears to be timing out. Error rate jumped from 0.1% to 45% in the last 15 minutes. Checkout completion rate dropped to near zero, effectively halting all revenue-generating transactions.</p>
+    <div class="pull-quote">
+      &ldquo;Error rate jumped from 0.1% to 45% &mdash; checkout completion dropped to zero.&rdquo;
+      <div class="pull-quote-attr">&mdash; Monitoring Alert</div>
+    </div>
+    <p>Security scan returned clean: injection score 2%, no PII detected, no anomalous patterns in the submission.</p>
+  </div>
+
+  <!-- Triage Data Grid -->
+  <hr class="section-rule">
+  <div class="section-header">AI Triage Assessment</div>
+
+  <div class="triage-data">
+    <div class="triage-cell">
+      <div class="label">Severity</div>
+      <div class="value" style="color: var(--accent);">P1</div>
+      <div class="sub">Critical</div>
+    </div>
+    <div class="triage-cell">
+      <div class="label">Confidence</div>
+      <div class="value">85%</div>
+      <div class="sub">AI certainty</div>
+    </div>
+    <div class="triage-cell">
+      <div class="label">Category</div>
+      <div class="value" style="font-size: 16px;">Payment</div>
+      <div class="sub">Processing</div>
+    </div>
+    <div class="triage-cell">
+      <div class="label">Component</div>
+      <div class="value" style="font-size: 14px; font-family: var(--mono);">StripeCreditCard</div>
+      <div class="sub">Spree::PaymentMethod</div>
+    </div>
+  </div>
+
+  <!-- Root cause — editorial prose -->
+  <div class="section-header">Root Cause Hypothesis</div>
+  <p style="font-size: 17px; line-height: 1.8; color: var(--text-body); margin-bottom: 2rem;">
+    The Stripe webhook endpoint is experiencing upstream latency causing a timeout cascade. The payment gateway connection pool may be exhausted due to retries on failed webhook deliveries, amplifying the failure across all checkout attempts.
+  </p>
+
+  <!-- Related Files -->
+  <div class="section-header">Related Solidus Files</div>
+  <ul class="file-list">
+    <li><span class="file-path">core/app/models/spree/payment.rb</span> <span class="file-tag">payment processing</span></li>
+    <li><span class="file-path">core/app/models/spree/payment_method.rb</span> <span class="file-tag">gateway interface</span></li>
+    <li><span class="file-path">api/app/controllers/spree/api/payments_controller.rb</span> <span class="file-tag">payment API</span></li>
+    <li><span class="file-path">core/app/models/spree/order.rb</span> <span class="file-tag">checkout flow</span></li>
+  </ul>
+
+  <!-- Actions -->
+  <hr class="section-rule">
+  <div class="section-header">Recommended Actions</div>
+  <ol class="actions-editorial">
+    <li>Check Stripe API status page for ongoing incidents</li>
+    <li>Review payment gateway timeout configuration in Solidus settings</li>
+    <li>Inspect webhook handler logs for timeout patterns</li>
+    <li>Consider enabling circuit breaker on the payment gateway client</li>
+    <li>Verify connection pool settings and current utilization</li>
+  </ol>
+
+  <!-- Dispatch -->
+  <hr class="section-rule">
+  <div class="section-header">Dispatch Actions</div>
+  <div class="dispatch-grid">
+    <div class="dispatch-box">
+      <div class="title">Ticket</div>
+      <div class="sub">Payments Team &mdash; Internal</div>
+      <div class="status">Created</div>
+    </div>
+    <div class="dispatch-box">
+      <div class="title">Email</div>
+      <div class="sub">payments-oncall@example.com</div>
+      <div class="status">Sent</div>
+    </div>
+    <div class="dispatch-box">
+      <div class="title">Chat</div>
+      <div class="sub">#incidents channel</div>
+      <div class="status">Delivered</div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">AgentX Hackathon 2026 &mdash; SRE Triage Agent // Editorial Magazine</footer>
+</body>
+</html>

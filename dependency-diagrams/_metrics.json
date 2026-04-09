@@ -1,0 +1,335 @@
+{
+  "total_modules": 37,
+  "total_edges": 75,
+  "unique_edges": 74,
+  "cycles": [
+    [
+      "app/models/incident.py",
+      "app/models/notification.py",
+      "app/models/incident.py"
+    ],
+    [
+      "app/models/incident.py",
+      "app/models/ticket.py",
+      "app/models/incident.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/triage/provider.py",
+      "app/pipeline/triage/agent.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/triage/provider.py",
+      "app/pipeline/triage/anthropic_provider.py",
+      "app/pipeline/triage/agent.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/triage/provider.py",
+      "app/pipeline/triage/langchain_provider.py",
+      "app/pipeline/triage/agent.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/triage/provider.py",
+      "app/pipeline/triage/managed_provider.py",
+      "app/pipeline/triage/agent.py"
+    ]
+  ],
+  "orphans": [
+    "app/__init__.py",
+    "app/pipeline/__init__.py",
+    "app/services/__init__.py"
+  ],
+  "entry_points": [
+    "app/main.py",
+    "app/routes/__init__.py",
+    "app/schemas/__init__.py",
+    "app/schemas/notification.py",
+    "app/schemas/ticket.py"
+  ],
+  "fan_out_top": [
+    [
+      "app/routes/incidents.py",
+      12
+    ],
+    [
+      "app/main.py",
+      11
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      5
+    ],
+    [
+      "app/routes/pages.py",
+      5
+    ],
+    [
+      "app/models/__init__.py",
+      4
+    ],
+    [
+      "app/pipeline/triage/provider.py",
+      4
+    ],
+    [
+      "app/services/seed_data.py",
+      4
+    ],
+    [
+      "app/models/incident.py",
+      3
+    ],
+    [
+      "app/pipeline/dispatch/service.py",
+      3
+    ],
+    [
+      "app/models/notification.py",
+      2
+    ],
+    [
+      "app/models/ticket.py",
+      2
+    ],
+    [
+      "app/pipeline/triage/anthropic_provider.py",
+      2
+    ],
+    [
+      "app/pipeline/triage/langchain_provider.py",
+      2
+    ],
+    [
+      "app/pipeline/triage/managed_provider.py",
+      2
+    ],
+    [
+      "app/routes/__init__.py",
+      2
+    ]
+  ],
+  "fan_in_top": [
+    [
+      "app/config.py",
+      11
+    ],
+    [
+      "app/models/incident.py",
+      8
+    ],
+    [
+      "app/models/ticket.py",
+      6
+    ],
+    [
+      "app/models/notification.py",
+      5
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      5
+    ],
+    [
+      "app/services/observability.py",
+      4
+    ],
+    [
+      "app/models/base.py",
+      4
+    ],
+    [
+      "app/database.py",
+      3
+    ],
+    [
+      "app/services/codebase_indexer.py",
+      3
+    ],
+    [
+      "app/routes/incidents.py",
+      2
+    ],
+    [
+      "app/routes/pages.py",
+      2
+    ],
+    [
+      "app/services/seed_data.py",
+      2
+    ],
+    [
+      "app/pipeline/knowledge/loader.py",
+      2
+    ],
+    [
+      "app/pipeline/dispatch/__init__.py",
+      2
+    ],
+    [
+      "app/schemas/incident.py",
+      2
+    ]
+  ],
+  "violations": [
+    [
+      "app/services/seed_data.py",
+      "app/pipeline/dispatch/__init__.py",
+      "services",
+      "pipeline"
+    ]
+  ],
+  "subpkg_cross": [
+    [
+      "app/models/__init__.py",
+      "app/models/base.py"
+    ],
+    [
+      "app/models/__init__.py",
+      "app/models/incident.py"
+    ],
+    [
+      "app/models/__init__.py",
+      "app/models/ticket.py"
+    ],
+    [
+      "app/models/__init__.py",
+      "app/models/notification.py"
+    ],
+    [
+      "app/models/incident.py",
+      "app/models/base.py"
+    ],
+    [
+      "app/models/incident.py",
+      "app/models/ticket.py"
+    ],
+    [
+      "app/models/incident.py",
+      "app/models/notification.py"
+    ],
+    [
+      "app/models/notification.py",
+      "app/models/base.py"
+    ],
+    [
+      "app/models/notification.py",
+      "app/models/incident.py"
+    ],
+    [
+      "app/models/ticket.py",
+      "app/models/base.py"
+    ],
+    [
+      "app/models/ticket.py",
+      "app/models/incident.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/knowledge/loader.py"
+    ],
+    [
+      "app/pipeline/triage/agent.py",
+      "app/pipeline/guardrail/pii.py"
+    ],
+    [
+      "app/routes/__init__.py",
+      "app/routes/incidents.py"
+    ],
+    [
+      "app/routes/__init__.py",
+      "app/routes/pages.py"
+    ],
+    [
+      "app/schemas/__init__.py",
+      "app/schemas/incident.py"
+    ],
+    [
+      "app/services/seed_data.py",
+      "app/services/observability.py"
+    ]
+  ],
+  "layer_matrix": {
+    "database": {
+      "config": 1
+    },
+    "main": {
+      "config": 1,
+      "database": 1,
+      "models": 1,
+      "routes": 2,
+      "pipeline": 1,
+      "services": 5
+    },
+    "models": {
+      "models": 11
+    },
+    "pipeline": {
+      "pipeline": 14,
+      "models": 3,
+      "config": 6,
+      "services": 1
+    },
+    "routes": {
+      "routes": 2,
+      "config": 2,
+      "database": 2,
+      "models": 4,
+      "pipeline": 5,
+      "schemas": 1,
+      "services": 3
+    },
+    "schemas": {
+      "schemas": 1,
+      "models": 3
+    },
+    "services": {
+      "config": 1,
+      "models": 2,
+      "pipeline": 1,
+      "services": 1
+    }
+  },
+  "svg_generated": true,
+  "all_nodes": [
+    "app/__init__.py",
+    "app/config.py",
+    "app/database.py",
+    "app/main.py",
+    "app/models/__init__.py",
+    "app/models/base.py",
+    "app/models/incident.py",
+    "app/models/notification.py",
+    "app/models/ticket.py",
+    "app/pipeline/__init__.py",
+    "app/pipeline/dispatch/__init__.py",
+    "app/pipeline/dispatch/service.py",
+    "app/pipeline/explain.py",
+    "app/pipeline/guardrail/__init__.py",
+    "app/pipeline/guardrail/checks.py",
+    "app/pipeline/guardrail/pii.py",
+    "app/pipeline/guardrail/rate_limit.py",
+    "app/pipeline/knowledge/__init__.py",
+    "app/pipeline/knowledge/loader.py",
+    "app/pipeline/triage/__init__.py",
+    "app/pipeline/triage/agent.py",
+    "app/pipeline/triage/anthropic_provider.py",
+    "app/pipeline/triage/langchain_provider.py",
+    "app/pipeline/triage/managed_provider.py",
+    "app/pipeline/triage/provider.py",
+    "app/routes/__init__.py",
+    "app/routes/incidents.py",
+    "app/routes/pages.py",
+    "app/schemas/__init__.py",
+    "app/schemas/incident.py",
+    "app/schemas/notification.py",
+    "app/schemas/ticket.py",
+    "app/services/__init__.py",
+    "app/services/codebase_indexer.py",
+    "app/services/observability.py",
+    "app/services/seed_data.py",
+    "app/services/seed_langfuse.py"
+  ]
+}

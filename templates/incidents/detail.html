@@ -225,18 +225,45 @@ function resolveIncident(e) {
     </div>
 
     {% else %}
-    <div class="empty-triage">
+    <div class="empty-triage" id="triage-empty">
         <p>No triage yet.</p>
-        <button class="btn btn-primary"
-                hx-post="/api/incidents/{{ incident.id }}/triage"
-                hx-target="#triage-panel"
-                hx-swap="outerHTML"
-                hx-select="#triage-panel"
-                hx-indicator="#triage-spinner">
+        <button class="btn btn-primary" id="triage-btn" onclick="runTriage()">
             &#9889; Run AI Triage
-            <span class="spinner" id="triage-spinner"></span>
         </button>
     </div>
+    <script>
+    function runTriage() {
+        var btn = document.getElementById('triage-btn');
+        var container = document.getElementById('triage-empty');
+        container.innerHTML =
+            '<div class="spinner-large"></div>' +
+            '<p>AI agent is analyzing this incident&hellip;</p>' +
+            '<small style="color: var(--fg-subtle)">This takes 10-15 seconds</small>';
+        fetch('/api/incidents/{{ incident.id }}/triage', { method: 'POST' })
+            .then(function(resp) {
+                if (resp.ok) { window.location.reload(); }
+                else {
+                    resp.json().then(function(d) {
+                        var msg = document.createElement('p');
+                        msg.style.color = 'var(--error)';
+                        msg.textContent = '\u26A0 ' + (d.detail || 'Triage failed');
+                        var retry = document.createElement('button');
+                        retry.className = 'btn btn-primary';
+                        retry.innerHTML = '&#9889; Retry';
+                        retry.onclick = runTriage;
+                        container.innerHTML = '';
+                        container.appendChild(msg);
+                        container.appendChild(retry);
+                    });
+                }
+            })
+            .catch(function() {
+                container.innerHTML =
+                    '<p style="color: var(--error)">&#9888; Network error</p>' +
+                    '<button class="btn btn-primary" onclick="runTriage()">&#9889; Retry</button>';
+            });
+    }
+    </script>
     {% endif %}
 </div>
 

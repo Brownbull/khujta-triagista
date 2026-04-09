@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRE Triage Agent — Vintage Analog</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #2B2520;
+  --paper: #F5E6C8;
+  --paper-dark: #E8D5B0;
+  --ink: #3D2B1F;
+  --ink-muted: #7A6B5D;
+  --red-ink: #8B2500;
+  --blue-ink: #2C4A6E;
+  --stamp-green: #2E6B3A;
+  --serif: 'Libre Baskerville', Georgia, serif;
+  --mono: 'Courier Prime', 'Courier New', monospace;
+}
+body {
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Film grain */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Paper page */
+.page {
+  max-width: 760px;
+  margin: 2rem auto;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 3rem 3.5rem;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 0 80px rgba(0,0,0,0.04);
+  position: relative;
+}
+
+/* Coffee stain */
+.page::after {
+  content: '';
+  position: absolute;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(139,90,43,0.08) 30%, transparent 70%);
+  top: 60px; right: 80px;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+/* Typewriter header */
+.header {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-left .agency {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: var(--ink-muted);
+}
+
+.header-left h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0.25rem 0;
+  color: var(--ink);
+}
+
+.header-left .date {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* Stamps */
+.stamp-cluster { text-align: right; }
+.stamp {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  border: 3px solid;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  margin-left: 8px;
+  margin-bottom: 6px;
+}
+.stamp-red { color: var(--red-ink); border-color: var(--red-ink); background: rgba(139,37,0,0.04); }
+.stamp-blue { color: var(--blue-ink); border-color: var(--blue-ink); background: rgba(44,74,110,0.04); transform: rotate(2deg); }
+.stamp-green { color: var(--stamp-green); border-color: var(--stamp-green); background: rgba(46,107,58,0.04); transform: rotate(-5deg); }
+
+/* Buttons */
+.action-strip {
+  display: flex; gap: 0.75rem; margin-top: 1rem;
+}
+.btn-vintage {
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 8px 20px; border: 2px solid var(--ink);
+  background: var(--paper-dark); color: var(--ink);
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-vintage:hover { background: var(--ink); color: var(--paper); }
+.btn-vintage-primary { background: var(--red-ink); color: var(--paper); border-color: var(--red-ink); }
+.btn-vintage-primary:hover { background: #6B1D00; }
+
+/* Section dividers */
+.divider {
+  border: none;
+  border-top: 1px dashed var(--ink-muted);
+  margin: 2rem 0;
+}
+
+.section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: var(--ink-muted);
+  margin-bottom: 1rem;
+}
+
+/* Typewriter text */
+.typed {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--ink);
+  background: rgba(0,0,0,0.02);
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--ink-muted);
+}
+
+/* Form-style data fields */
+.field-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0 1rem;
+  margin-bottom: 0.5rem;
+}
+.field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-muted);
+  padding-top: 2px;
+  text-align: right;
+}
+.field-value {
+  font-size: 14px;
+  border-bottom: 1px solid var(--ink-muted);
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+/* Triage — tabular typewriter data */
+.triage-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 13px;
+}
+.triage-table td {
+  padding: 8px 12px;
+  border: 1px solid rgba(61,43,31,0.2);
+  vertical-align: top;
+}
+.triage-table td:first-child {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-muted);
+  width: 140px;
+  background: rgba(0,0,0,0.02);
+}
+.triage-table .highlight { color: var(--red-ink); font-weight: 700; }
+
+/* Confidence — typewriter bar */
+.conf-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.conf-track {
+  flex: 1; height: 12px;
+  background: repeating-linear-gradient(90deg, var(--ink-muted) 0 4px, transparent 4px 8px);
+  opacity: 0.15;
+  position: relative;
+}
+.conf-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: repeating-linear-gradient(90deg, var(--red-ink) 0 4px, transparent 4px 8px);
+  opacity: 0.8;
+}
+.conf-value { font-weight: 700; font-size: 16px; }
+
+/* File list — typewriter ledger */
+.ledger { list-style: none; }
+.ledger li {
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--ink-muted);
+  display: flex; justify-content: space-between;
+  font-size: 12px;
+}
+.ledger-path { color: var(--blue-ink); }
+.ledger-note { color: var(--ink-muted); font-style: italic; }
+
+/* Numbered actions — handwritten feel */
+.action-list { list-style: none; counter-reset: act; }
+.action-list li {
+  counter-increment: act;
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--ink-muted);
+  display: flex; gap: 1rem; font-size: 13px;
+}
+.action-list li::before {
+  content: counter(act) ".";
+  font-weight: 700;
+  color: var(--red-ink);
+  min-width: 24px;
+}
+
+/* Dispatch — rubber stamp cards */
+.dispatch-stamps {
+  display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap;
+}
+.dispatch-stamp-card {
+  flex: 1; min-width: 180px;
+  border: 2px dashed var(--ink-muted);
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+}
+.dispatch-stamp-card .channel {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--ink-muted);
+}
+.dispatch-stamp-card .target {
+  font-size: 12px; margin-top: 0.25rem;
+}
+.dispatch-stamp-card .status-stamp {
+  position: absolute; top: -8px; right: -8px;
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--stamp-green); border: 2px solid var(--stamp-green);
+  padding: 2px 8px; background: var(--paper);
+  transform: rotate(5deg);
+}
+
+/* Footer */
+.footer-note {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--ink);
+  font-size: 11px;
+  color: var(--ink-muted);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="agency">SRE Triage Division</div>
+      <h1>Incident Dossier</h1>
+      <div class="date">Filed: April 8, 2026 &mdash; 14:32 UTC</div>
+    </div>
+    <div class="stamp-cluster">
+      <span class="stamp stamp-red">P1 CRITICAL</span><br>
+      <span class="stamp stamp-blue">DISPATCHED</span><br>
+      <span class="stamp stamp-green">PAYMENTS</span>
+    </div>
+  </div>
+
+  <div class="action-strip">
+    <button class="btn-vintage">Acknowledge</button>
+    <button class="btn-vintage btn-vintage-primary">Resolve</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Report -->
+  <div class="section-label">I. Incident Report</div>
+
+  <div class="field-grid">
+    <span class="field-label">Case ID</span>
+    <span class="field-value">INC-8b79e124</span>
+    <span class="field-label">Reporter</span>
+    <span class="field-value">sre-oncall@example.com (SRE On-Call Engineer)</span>
+    <span class="field-label">Received</span>
+    <span class="field-value">2026-04-08 14:32:05 UTC</span>
+  </div>
+
+  <div class="typed">Payment gateway returning HTTP 502 errors during checkout.
+All customers affected since 14:30 UTC. Stripe webhook handler
+appears to be timing out. Error rate jumped from 0.1% to 45%.
+Checkout completion rate dropped to near zero.</div>
+
+  <p style="font-size: 12px; color: var(--stamp-green); margin-top: 0.75rem; font-weight: 700;">
+    SECURITY CLEARANCE: Injection 2% &mdash; CLEAN
+  </p>
+
+  <hr class="divider">
+
+  <!-- Triage Assessment -->
+  <div class="section-label">II. AI Triage Assessment</div>
+
+  <table class="triage-table">
+    <tr><td>Severity</td><td class="highlight">P1 &mdash; Critical (all customers affected)</td></tr>
+    <tr><td>Category</td><td>Payment Processing</td></tr>
+    <tr><td>Component</td><td>Spree::PaymentMethod::StripeCreditCard</td></tr>
+    <tr><td>Assigned To</td><td>Payments Team</td></tr>
+    <tr>
+      <td>Confidence</td>
+      <td>
+        <div class="conf-bar">
+          <div class="conf-track" style="position: relative;"><div class="conf-fill" style="width: 85%;"></div></div>
+          <span class="conf-value">85%</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-label" style="margin-top: 1.5rem;">Summary</div>
+  <p style="font-size: 14px; line-height: 1.8;">
+    Critical payment processing failure in the Solidus checkout pipeline. The Stripe webhook handler is timing out, causing HTTP 502 errors that prevent order completion for all customers.
+  </p>
+
+  <div class="section-label" style="margin-top: 1.5rem;">Root Cause Hypothesis</div>
+  <p style="font-size: 14px; line-height: 1.8;">
+    The Stripe webhook endpoint is experiencing upstream latency causing timeout cascade. The payment gateway connection pool may be exhausted due to retries on failed webhook deliveries.
+  </p>
+
+  <hr class="divider">
+
+  <!-- Files -->
+  <div class="section-label">III. Related Codebase Files</div>
+  <ul class="ledger">
+    <li><span class="ledger-path">core/app/models/spree/payment.rb</span> <span class="ledger-note">payment processing</span></li>
+    <li><span class="ledger-path">core/app/models/spree/payment_method.rb</span> <span class="ledger-note">gateway interface</span></li>
+    <li><span class="ledger-path">api/app/controllers/spree/api/payments_controller.rb</span> <span class="ledger-note">payment API</span></li>
+    <li><span class="ledger-path">core/app/models/spree/order.rb</span> <span class="ledger-note">checkout flow</span></li>
+  </ul>
+
+  <hr class="divider">
+
+  <!-- Actions -->
+  <div class="section-label">IV. Recommended Actions</div>
+  <ol class="action-list">
+    <li>Check Stripe API status page for ongoing incidents</li>
+    <li>Review payment gateway timeout configuration in Solidus settings</li>
+    <li>Inspect webhook handler logs for timeout patterns</li>
+    <li>Consider enabling circuit breaker on the payment gateway client</li>
+    <li>Verify connection pool settings and current utilization</li>
+  </ol>
+
+  <hr class="divider">
+
+  <!-- Dispatch -->
+  <div class="section-label">V. Dispatch Record</div>
+  <div class="dispatch-stamps">
+    <div class="dispatch-stamp-card">
+      <div class="channel">Ticket</div>
+      <div class="target">Payments Team</div>
+      <div class="status-stamp">Created</div>
+    </div>
+    <div class="dispatch-stamp-card">
+      <div class="channel">Email</div>
+      <div class="target">payments-oncall@</div>
+      <div class="status-stamp">Sent</div>
+    </div>
+    <div class="dispatch-stamp-card">
+      <div class="channel">Chat</div>
+      <div class="target">#incidents</div>
+      <div class="status-stamp">Delivered</div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    AgentX Hackathon 2026 &bull; SRE Triage Agent &bull; Vintage Analog
+  </div>
+
+</div>
+
+</body>
+</html>

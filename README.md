@@ -16,21 +16,44 @@ AI-powered SRE Incident Intake & Triage Agent for the [AgentX Hackathon 2026](ht
 
 All engines produce the same structured output. The Experimental engine is the most powerful — it provisions a cloud container, clones the repo, and explores files autonomously.
 
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) (v24+) and [Docker Compose](https://docs.docker.com/compose/install/) v2+
+- At least one AI API key (see "Engine Setup" below)
+- ~4 GB disk (Docker images + Solidus repo clone)
+
+No Python, Node.js, or database install needed — everything runs in Docker.
+
 ## Quick Start
 
 ```bash
-# 1. Copy environment file
+# 1. Clone the repo
+git clone https://github.com/brownbull/sre-triage-agent.git
+cd sre-triage-agent
+
+# 2. Copy environment file
 cp .env.example .env
 
-# 2. Add at least one API key (see "Engine Setup" below)
+# 3. Add at least one API key (see "Engine Setup" below)
 #    Minimum: ANTHROPIC_API_KEY for Premium engine
+#    Edit .env and set: ANTHROPIC_API_KEY=sk-ant-...
 
-# 3. Start everything
+# 4. Start everything (first build takes ~2 min)
 docker compose up --build -d
 
-# 4. Open the app
+# 5. Wait for all services to be healthy (~30s after build)
+docker compose ps   # all should show "Up" / "healthy"
+
+# 6. Open the app
 open http://localhost:8100
 ```
+
+On first startup the app automatically:
+- Clones the Solidus e-commerce codebase (~30K LOC)
+- Creates database tables
+- Seeds **18 sample incidents** covering all lifecycle states, engines, and attachment types
+- Creates a Langfuse account, project, and API keys
+- Seeds Langfuse with pipeline traces, sessions, and user data
 
 The app seeds itself with **18 sample incidents** on first startup covering all lifecycle states, all 3 triage engines, and multiple attachment types.
 
@@ -247,3 +270,17 @@ app/
     +-- seed_attachments/     # Mock log files + screenshots
     \-- seed_langfuse.py      # Auto-create Langfuse account/keys
 ```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `clone-solidus` fails | Check internet connection; the Solidus repo is cloned from GitHub on first startup |
+| Port conflict on 8100/5433/6380/3100 | Another service is using the port. Stop it or edit `docker-compose.yml` ports |
+| Triage returns "AI provider temporarily unavailable" | Check your API key in `.env` — the engine needs a valid key |
+| Langfuse shows empty traces/sessions | Restart app: `docker compose restart app` — seed runs on startup |
+| Database errors after code changes | Reset volumes: `docker compose down -v && docker compose up --build -d` |
+
+## License
+
+[MIT](LICENSE)

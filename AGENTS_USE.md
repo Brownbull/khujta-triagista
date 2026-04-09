@@ -285,8 +285,8 @@ graph LR
 ## 6. Observability
 
 - **Logging:** Structured Python logging to stdout (Docker captures). Key events: triage start/complete, dispatch actions, guardrail decisions, triage duration.
-- **Tracing:** OpenTelemetry spans across pipeline stages (`incident.guardrail`, `incident.triage`, `incident.dispatch`). FastAPI, SQLAlchemy, and HTTPX auto-instrumented.
-- **LLM Tracing (Langfuse):**
+- **Tracing (infrastructure):** OpenTelemetry auto-instruments FastAPI routes, SQLAlchemy queries, and HTTPX calls (Claude/Gemini API). Custom pipeline spans (`incident.guardrail`, `incident.triage`, `incident.dispatch`) wrap each stage. OTel traces export to structured console logs (`docker compose logs app`) — no separate OTel dashboard is deployed; Langfuse serves as the visual observability UI.
+- **LLM Tracing (Langfuse — visual dashboard):**
   - **Traces tab:** Multi-span pipeline traces (guardrail -> context-retrieval -> triage-generation -> dispatch) for every successful triage
   - **Sessions tab:** Grouped by incident ID — all triage activity for one incident in one session
   - **Users tab:** Grouped by reporter email — see submission patterns per user

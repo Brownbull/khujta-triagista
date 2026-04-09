@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Detail — Playful / Joyful</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Palette ── */
+  :root {
+    --purple: #8B5CF6;
+    --coral: #FB923C;
+    --sky: #38BDF8;
+    --mint: #34D399;
+    --cream: #FFFBEB;
+    --lavender: #F5F3FF;
+    --purple-light: #DDD6FE;
+    --coral-light: #FED7AA;
+    --sky-light: #BAE6FD;
+    --mint-light: #A7F3D0;
+    --text-dark: #3B1F6E;
+    --text-body: #4A3A6B;
+    --text-muted: #7C6E99;
+    --white: #FFFFFF;
+    --radius-pill: 999px;
+    --radius-card: 24px;
+    --radius-sm: 14px;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    color: var(--text-body);
+    background: var(--cream);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    color: var(--text-dark);
+  }
+
+  /* ── Animations ── */
+  @keyframes bounceIn {
+    0%   { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes floatBubble {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+
+  @keyframes dispatchRotate {
+    0%   { opacity: 0; transform: rotate(-2deg) translateY(20px); }
+    100% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .bounce-in {
+    animation: bounceIn 0.6s var(--spring) both;
+  }
+
+  .float-bubble {
+    animation: floatBubble 3s ease-in-out infinite;
+  }
+
+  .dispatch-rotate {
+    animation: dispatchRotate 0.5s var(--spring) both;
+  }
+
+  /* stagger delays */
+  .delay-1 { animation-delay: 0.08s; }
+  .delay-2 { animation-delay: 0.16s; }
+  .delay-3 { animation-delay: 0.24s; }
+  .delay-4 { animation-delay: 0.32s; }
+  .delay-5 { animation-delay: 0.40s; }
+  .delay-6 { animation-delay: 0.48s; }
+  .delay-7 { animation-delay: 0.56s; }
+  .delay-8 { animation-delay: 0.64s; }
+
+  /* float stagger */
+  .float-delay-1 { animation-delay: 0s; }
+  .float-delay-2 { animation-delay: 0.75s; }
+  .float-delay-3 { animation-delay: 1.5s; }
+  .float-delay-4 { animation-delay: 2.25s; }
+
+  /* ── Nav ── */
+  .nav-bar {
+    position: sticky;
+    top: 16px;
+    z-index: 100;
+    max-width: 920px;
+    margin: 16px auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--white);
+    border-radius: var(--radius-pill);
+    padding: 10px 12px 10px 20px;
+    box-shadow: 0 4px 24px rgba(139, 92, 246, 0.12), 0 1px 4px rgba(0,0,0,0.04);
+    animation: bounceIn 0.5s var(--spring) both;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--purple);
+    text-decoration: none;
+  }
+
+  .nav-logo span.bolt {
+    font-size: 1.35rem;
+    display: inline-block;
+    transform: rotate(-8deg);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    display: inline-block;
+    padding: 7px 18px;
+    border-radius: var(--radius-pill);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: background 0.25s var(--spring), color 0.25s, transform 0.25s var(--spring);
+  }
+
+  .nav-links a:hover {
+    background: var(--lavender);
+    color: var(--purple);
+    transform: scale(1.06);
+  }
+
+  .nav-links a.active {
+    background: var(--purple);
+    color: var(--white);
+  }
+
+  .nav-links a.active:hover {
+    background: #7C3AED;
+    transform: scale(1.06);
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 8px 20px 60px;
+  }
+
+  /* ── Section spacing ── */
+  .section {
+    margin-top: 28px;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .emoji {
+    font-size: 1.3rem;
+  }
+
+  /* ── Incident Card (top) ── */
+  .incident-card {
+    display: flex;
+    border-radius: var(--radius-card);
+    background: var(--white);
+    overflow: hidden;
+    box-shadow: 0 6px 32px rgba(139, 92, 246, 0.10), 0 1px 4px rgba(0,0,0,0.04);
+    transition: transform 0.3s var(--spring), box-shadow 0.3s;
+  }
+
+  .incident-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 40px rgba(139, 92, 246, 0.16), 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .incident-strip {
+    width: 10px;
+    flex-shrink: 0;
+    background: var(--coral);
+    border-radius: var(--radius-card) 0 0 var(--radius-card);
+  }
+
+  .incident-body {
+    flex: 1;
+    padding: 28px 32px;
+  }
+
+  .incident-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .incident-emoji {
+    font-size: 2.8rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(251, 146, 60, 0.35));
+  }
+
+  .incident-header {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .incident-id-pill {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--lavender);
+    color: var(--purple);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+  }
+
+  .incident-title {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: transform 0.25s var(--spring), background 0.25s;
+    cursor: default;
+  }
+
+  .pill:hover {
+    transform: scale(1.08);
+  }
+
+  .pill-coral   { background: var(--coral-light); color: #9A3412; }
+  .pill-coral:hover { background: #FDBA74; }
+  .pill-purple  { background: var(--purple-light); color: #5B21B6; }
+  .pill-purple:hover { background: #C4B5FD; }
+  .pill-sky     { background: var(--sky-light); color: #0369A1; }
+  .pill-sky:hover { background: #7DD3FC; }
+  .pill-mint    { background: var(--mint-light); color: #065F46; }
+  .pill-mint:hover { background: #6EE7B7; }
+
+  .incident-meta {
+    margin-top: 14px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  /* ── Stat Bubbles ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .stat-bubble {
+    border-radius: var(--radius-card);
+    padding: 24px 16px;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    transition: transform 0.3s var(--spring), box-shadow 0.3s;
+  }
+
+  .stat-bubble:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.09);
+  }
+
+  .stat-bubble.coral   { background: var(--coral-light); }
+  .stat-bubble.sky     { background: var(--sky-light); }
+  .stat-bubble.lavender{ background: var(--lavender); }
+  .stat-bubble.mint    { background: var(--mint-light); }
+
+  .stat-label {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+
+  .stat-value {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    line-height: 1.2;
+    color: var(--text-dark);
+  }
+
+  .stat-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Description Card ── */
+  .desc-card {
+    border-radius: var(--radius-card);
+    background: var(--cream);
+    border: 2px solid #F3E8D0;
+    padding: 24px 28px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+    transition: transform 0.3s var(--spring);
+  }
+
+  .desc-card:hover {
+    transform: scale(1.01);
+  }
+
+  .desc-text {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: var(--text-body);
+  }
+
+  .guardrails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .guardrail-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--mint-light);
+    color: #065F46;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: transform 0.25s var(--spring), background 0.25s;
+  }
+
+  .guardrail-pill:hover {
+    transform: scale(1.08);
+    background: #6EE7B7;
+  }
+
+  /* ── Root Cause Card ── */
+  .root-cause-card {
+    border-radius: var(--radius-card);
+    background: var(--lavender);
+    border: 2px solid var(--purple-light);
+    padding: 24px 28px;
+    box-shadow: 0 4px 18px rgba(139, 92, 246, 0.08);
+    transition: transform 0.3s var(--spring);
+  }
+
+  .root-cause-card:hover {
+    transform: scale(1.01);
+  }
+
+  .root-cause-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-body);
+  }
+
+  /* ── Related Files ── */
+  .files-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .files-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .files-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .files-scroll::-webkit-scrollbar-thumb {
+    background: var(--purple-light);
+    border-radius: var(--radius-pill);
+  }
+
+  .file-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    background: var(--white);
+    border: 2px solid var(--purple-light);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: var(--purple);
+    cursor: pointer;
+    transition: transform 0.25s var(--spring), background 0.25s, border-color 0.25s;
+    white-space: nowrap;
+  }
+
+  .file-chip:hover {
+    background: var(--lavender);
+    border-color: var(--purple);
+    transform: scale(1.06);
+  }
+
+  .file-chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .file-chip:nth-child(1) .dot { background: var(--coral); }
+  .file-chip:nth-child(2) .dot { background: var(--sky); }
+  .file-chip:nth-child(3) .dot { background: var(--mint); }
+  .file-chip:nth-child(4) .dot { background: var(--purple); }
+
+  /* ── Actions Grid ── */
+  .actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .action-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    padding: 18px 20px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.04);
+    transition: transform 0.3s var(--spring), box-shadow 0.3s;
+  }
+
+  .action-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  }
+
+  /* span full width when odd last child */
+  .action-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .action-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--white);
+  }
+
+  .action-num.purple { background: var(--purple); }
+  .action-num.coral  { background: var(--coral); }
+  .action-num.sky    { background: var(--sky); }
+
+  .action-text {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-body);
+    padding-top: 2px;
+  }
+
+  /* ── Dispatch Cards ── */
+  .dispatch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .dispatch-card {
+    border-radius: var(--radius-card);
+    background: var(--white);
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    transition: transform 0.3s var(--spring), box-shadow 0.3s;
+  }
+
+  .dispatch-card:hover {
+    transform: scale(1.04);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.09);
+  }
+
+  .dispatch-strip {
+    height: 8px;
+  }
+
+  .dispatch-strip.purple { background: var(--purple); }
+  .dispatch-strip.coral  { background: var(--coral); }
+  .dispatch-strip.sky    { background: var(--sky); }
+
+  .dispatch-inner {
+    padding: 24px 16px 22px;
+  }
+
+  .dispatch-emoji {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .dispatch-channel {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+  }
+
+  .dispatch-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--mint-light);
+    color: #065F46;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: transform 0.25s var(--spring), background 0.25s;
+  }
+
+  .dispatch-done:hover {
+    transform: scale(1.08);
+    background: #6EE7B7;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 32px 20px 24px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  .footer-inner {
+    display: inline-block;
+    padding: 10px 28px;
+    border-radius: var(--radius-pill);
+    background: var(--white);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .stat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+    .actions-grid .action-card:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+    .dispatch-grid {
+      grid-template-columns: 1fr;
+    }
+    .incident-body {
+      padding: 20px;
+    }
+    .nav-bar {
+      margin: 10px 12px;
+      padding: 8px 10px 8px 16px;
+    }
+    .nav-links a {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+    }
+    .container {
+      padding: 8px 14px 40px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Nav Bar ── -->
+<nav class="nav-bar">
+  <a href="#" class="nav-logo">
+    <span class="bolt">&#9889;</span> AgentX Triage
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Dashboard</a></li>
+    <li><a href="#" class="active">Incidents</a></li>
+    <li><a href="#">Settings</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <!-- ── Incident Card ── -->
+  <div class="section bounce-in delay-1">
+    <div class="incident-card">
+      <div class="incident-strip"></div>
+      <div class="incident-body">
+        <div class="incident-top-row">
+          <div class="incident-emoji">&#128293;</div>
+          <div class="incident-header">
+            <span class="incident-id-pill">INC-8b79e124</span>
+            <h1 class="incident-title">Payment Gateway 502 Errors</h1>
+            <div class="pill-row">
+              <span class="pill pill-purple">&#128994; Dispatched</span>
+              <span class="pill pill-coral">&#128680; P1 &mdash; Critical</span>
+              <span class="pill pill-sky">&#128176; Payments</span>
+            </div>
+            <div class="incident-meta">
+              <span>&#9993;&#65039; sre-oncall@example.com</span>
+              <span>&#128197; April 8, 2026 &middot; 14:32 UTC</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stat Bubbles ── -->
+  <div class="section">
+    <div class="stat-grid">
+      <div class="stat-bubble coral float-bubble float-delay-1 bounce-in delay-2">
+        <div class="stat-label">Severity</div>
+        <div class="stat-value">P1</div>
+        <div class="stat-sub">Critical</div>
+      </div>
+      <div class="stat-bubble sky float-bubble float-delay-2 bounce-in delay-3">
+        <div class="stat-label">Confidence</div>
+        <div class="stat-value">85%</div>
+        <div class="stat-sub">High</div>
+      </div>
+      <div class="stat-bubble lavender float-bubble float-delay-3 bounce-in delay-4">
+        <div class="stat-label">Category</div>
+        <div class="stat-value" style="font-size:1.1rem;">payment-processing</div>
+        <div class="stat-sub">Spree::PaymentMethod</div>
+      </div>
+      <div class="stat-bubble mint float-bubble float-delay-4 bounce-in delay-5">
+        <div class="stat-label">Team</div>
+        <div class="stat-value">Payments</div>
+        <div class="stat-sub">Assigned</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Description ── -->
+  <div class="section bounce-in delay-4">
+    <h2 class="section-title"><span class="emoji">&#128221;</span> What happened?</h2>
+    <div class="desc-card">
+      <p class="desc-text">
+        Payment gateway returning HTTP 502 errors during checkout. All customers affected since 14:30 UTC. Stripe webhook handler appears to be timing out. Error rate jumped from 0.1% to 45%. Checkout completion rate dropped to near zero.
+      </p>
+      <div class="guardrails">
+        <span class="guardrail-pill">&#9989; Injection: 2%</span>
+        <span class="guardrail-pill">&#9989; Clean</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Root Cause ── -->
+  <div class="section bounce-in delay-5">
+    <h2 class="section-title"><span class="emoji">&#128161;</span> Root Cause Analysis</h2>
+    <div class="root-cause-card">
+      <p class="root-cause-text">
+        The Stripe webhook endpoint is experiencing upstream latency causing timeout cascade. The payment gateway connection pool may be exhausted due to retries on failed webhook deliveries.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Related Files ── -->
+  <div class="section bounce-in delay-5">
+    <h2 class="section-title"><span class="emoji">&#128194;</span> Related Files</h2>
+    <div class="files-scroll">
+      <span class="file-chip"><span class="dot"></span> spree/payment.rb</span>
+      <span class="file-chip"><span class="dot"></span> spree/payment_method.rb</span>
+      <span class="file-chip"><span class="dot"></span> api/payments_controller.rb</span>
+      <span class="file-chip"><span class="dot"></span> spree/order.rb</span>
+    </div>
+  </div>
+
+  <!-- ── Actions ── -->
+  <div class="section bounce-in delay-6">
+    <h2 class="section-title"><span class="emoji">&#127919;</span> Recommended Actions</h2>
+    <div class="actions-grid">
+      <div class="action-card">
+        <span class="action-num purple">1</span>
+        <p class="action-text">Check Stripe API status page and verify webhook endpoint health via <code>stripe trigger</code> CLI.</p>
+      </div>
+      <div class="action-card">
+        <span class="action-num coral">2</span>
+        <p class="action-text">Increase connection pool size and timeout thresholds in <code>StripeCreditCard</code> payment method config.</p>
+      </div>
+      <div class="action-card">
+        <span class="action-num sky">3</span>
+        <p class="action-text">Enable circuit breaker on the webhook handler to stop retry storms and let the pool recover.</p>
+      </div>
+      <div class="action-card">
+        <span class="action-num purple">4</span>
+        <p class="action-text">Deploy a fallback payment flow that queues orders for retry when gateway is unhealthy.</p>
+      </div>
+      <div class="action-card">
+        <span class="action-num coral">5</span>
+        <p class="action-text">Add alerting on connection pool exhaustion and webhook latency p99 to prevent recurrence.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Dispatch ── -->
+  <div class="section">
+    <h2 class="section-title bounce-in delay-6"><span class="emoji">&#127881;</span> Dispatch Status</h2>
+    <div class="dispatch-grid">
+      <div class="dispatch-card dispatch-rotate delay-6">
+        <div class="dispatch-strip purple"></div>
+        <div class="dispatch-inner">
+          <span class="dispatch-emoji">&#127915;</span>
+          <div class="dispatch-channel">Ticket</div>
+          <span class="dispatch-done">&#9989; Created!</span>
+        </div>
+      </div>
+      <div class="dispatch-card dispatch-rotate delay-7">
+        <div class="dispatch-strip coral"></div>
+        <div class="dispatch-inner">
+          <span class="dispatch-emoji">&#9993;&#65039;</span>
+          <div class="dispatch-channel">Email</div>
+          <span class="dispatch-done">&#9989; Sent!</span>
+        </div>
+      </div>
+      <div class="dispatch-card dispatch-rotate delay-8">
+        <div class="dispatch-strip sky"></div>
+        <div class="dispatch-inner">
+          <span class="dispatch-emoji">&#128172;</span>
+          <div class="dispatch-channel">Chat</div>
+          <span class="dispatch-done">&#9989; Sent!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Footer ── -->
+<div class="footer bounce-in delay-8">
+  <div class="footer-inner">
+    Made with &#10084;&#65039; by AgentX Triage &middot; Playful &amp; Joyful &#11088;
+  </div>
+</div>
+
+</body>
+</html>
