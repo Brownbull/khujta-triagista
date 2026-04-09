@@ -1,0 +1,201 @@
+{% extends "base_dashboard.html" %}
+{% set short_id = incident.id|string %}
+
+{% block title %}INC-{{ short_id[:8] }} — Triagista{% endblock %}
+
+{% block topbar %}
+<span class="topbar-id" data-testid="topbar-title">INC-{{ short_id[:8] }}</span>
+
+<span class="badge badge-{{ incident.status.value }}" data-testid="topbar-status">{{ incident.status.value|capitalize }}</span>
+
+{% if incident.severity %}
+<span class="badge badge-{{ incident.severity|lower }}" data-testid="topbar-severity">{{ incident.severity }}</span>
+{% endif %}
+
+{% if incident.suggested_assignee %}
+<span class="badge badge-team" data-testid="topbar-team">{{ incident.suggested_assignee|replace('-team','')|capitalize }}</span>
+{% endif %}
+
+<!-- View tabs -->
+<div class="view-tabs">
+  <a class="view-tab active" href="/incidents/{{ incident.id }}" data-testid="tab-detail">Detail</a>
+  <a class="view-tab" href="/incidents/{{ incident.id }}?view=chat" data-testid="tab-chat">Chat</a>
+</div>
+
+<!-- Action buttons -->
+<div class="topbar-actions">
+  {% if incident.status.value == 'submitted' %}
+  <button class="btn-top btn-top-primary" id="btn-triage" onclick="runTriage('{{ incident.id }}')" data-testid="btn-triage">Run Triage</button>
+  {% elif incident.status.value == 'dispatched' %}
+  <button class="btn-top" onclick="acknowledgeIncident('{{ incident.id }}')" data-testid="btn-acknowledge">Acknowledge</button>
+  <button class="btn-top btn-top-primary" onclick="openResolveDialog()" data-testid="btn-resolve">Resolve</button>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block settings_margin %}8px{% endblock %}
+
+{% block content %}
+<div class="view-animate">
+  {% if incident.severity %}
+  <!-- KPI Strip -->
+  <div class="kpi-strip" data-testid="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-label">Severity</div>
+      <div class="kpi-value {% if incident.severity == 'P1' %}red{% elif incident.severity == 'P2' %}yellow{% else %}blue{% endif %}">{{ incident.severity }}</div>
+      <div class="kpi-sub">{% if incident.severity == 'P1' %}Critical{% elif incident.severity == 'P2' %}Major{% elif incident.severity == 'P3' %}Minor{% else %}Low{% endif %}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Confidence</div>
+      <div class="kpi-value blue">{{ (incident.confidence * 100)|int if incident.confidence else 0 }}%</div>
+      <div class="kpi-sub">AI certainty</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Category</div>
+      <div class="kpi-value" style="font-size:14px">{{ incident.category|default('—')|replace('-',' ')|title }}</div>
+      <div class="kpi-sub">Classification</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Team</div>
+      <div class="kpi-value yellow" style="font-size:14px">{{ incident.suggested_assignee|default('—')|replace('-team','')|capitalize }}</div>
+      <div class="kpi-sub">Assigned</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Age</div>
+      {% set age_minutes = ((now - incident.created_at).total_seconds() / 60)|int %}
+      <div class="kpi-value green">{% if age_minutes < 60 %}{{ age_minutes }}m{% elif age_minutes < 1440 %}{{ (age_minutes / 60)|int }}h{% else %}{{ (age_minutes / 1440)|int }}d{% endif %}</div>
+      <div class="kpi-sub">Since report</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Description + Root Cause -->
+  <div class="compact-grid">
+    <div class="panel">
+      <div class="panel-header">Description</div>
+      <div class="panel-body">
+        <p class="desc-text">{{ incident.description }}</p>
+        {% if incident.injection_score is not none %}
+        <div class="guard-row">
+          <span class="guard-pill">Injection: {{ (incident.injection_score * 100)|int }}%</span>
+          <span class="guard-pill">{{ 'Clean' if (incident.validation_flags or {}).get('passed', true) else 'Flagged' }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">Root Cause Hypothesis</div>
+      <div class="panel-body">
+        {% if incident.root_cause_hypothesis %}
+        <p class="desc-text">{{ incident.root_cause_hypothesis }}</p>
+        {% else %}
+        <p class="desc-text" style="opacity:0.4">Run triage to generate root cause analysis</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if incident.related_files or incident.recommended_actions %}
+  <!-- Related Files + Actions -->
+  <div class="compact-grid" style="margin-top: 12px;">
+    <div class="panel">
+      <div class="panel-header">Related Files <span style="font-size:10px;opacity:0.6">{{ (incident.related_files or [])|length }} files</span></div>
+      <div class="panel-body" style="padding:0">
+        <table class="file-table" data-testid="related-files">
+          {% for f in incident.related_files or [] %}
+          <tr>
+            <td>{{ f.path }}</td>
+            <td>{{ f.relevance }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-dim)">No files identified</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">Recommended Actions <span style="font-size:10px;opacity:0.6">{{ (incident.recommended_actions or [])|length }} items</span></div>
+      <div class="panel-body" style="padding:0">
+        <ul class="action-compact" data-testid="recommended-actions">
+          {% for action in incident.recommended_actions or [] %}
+          <li><span class="action-num">{{ loop.index }}</span> {{ action }}</li>
+          {% else %}
+          <li style="text-align:center;padding:20px;color:var(--text-dim)">No actions yet</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if incident.ticket or incident.notifications %}
+  <!-- Dispatch -->
+  <div class="panel" style="margin-top: 12px;">
+    <div class="panel-header">Dispatch <span style="font-size:10px;opacity:0.6">{{ (1 if incident.ticket else 0) + (incident.notifications or [])|length }} actions</span></div>
+    <div class="panel-body" style="padding:0">
+      {% if incident.ticket %}
+      <div class="dispatch-compact">
+        <span class="dispatch-dot"></span>
+        <span>Ticket created &rarr; {{ incident.suggested_assignee|default('Team')|replace('-team','')|capitalize }}</span>
+        <span class="dispatch-channel">{{ incident.ticket.status.value|capitalize }}</span>
+      </div>
+      {% endif %}
+      {% for notif in incident.notifications or [] %}
+      <div class="dispatch-compact">
+        <span class="dispatch-dot"></span>
+        <span>{{ notif.type.value|capitalize }} {% if notif.sent %}sent{% else %}pending{% endif %}</span>
+        <span class="dispatch-channel">{{ notif.recipient }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if incident.resolved_at %}
+  <!-- Resolution -->
+  <div class="panel" style="margin-top: 12px;">
+    <div class="panel-header">Resolution</div>
+    <div class="panel-body">
+      <p class="desc-text">
+        <strong>Type:</strong> {{ incident.resolution_type|default('—')|capitalize }}<br>
+        {% if incident.resolution_notes %}<strong>Notes:</strong> {{ incident.resolution_notes }}<br>{% endif %}
+        <strong>Resolved:</strong> {{ incident.resolved_at.strftime('%Y-%m-%d %H:%M UTC') }}
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not incident.severity and incident.status.value == 'submitted' %}
+  <!-- Pre-triage state -->
+  <div class="panel" style="margin-top: 12px; text-align: center; padding: 40px;" data-testid="pre-triage-panel">
+    <p style="font-size: 14px; color: var(--text-dim);">This incident has not been triaged yet.</p>
+    <button class="btn-top btn-top-primary" style="margin-top: 12px;" onclick="runTriage('{{ incident.id }}')">
+      Run AI Triage
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Resolve dialog (hidden) -->
+<div class="resolve-overlay" id="resolve-overlay">
+  <div class="resolve-dialog">
+    <h3>Resolve Incident</h3>
+    <form id="resolve-form" onsubmit="event.preventDefault(); submitResolve('{{ incident.id }}');">
+      <label for="resolution_type">Resolution Type</label>
+      <select name="resolution_type" id="resolution_type">
+        <option value="fix">Fix Applied</option>
+        <option value="workaround">Workaround</option>
+        <option value="not-a-bug">Not a Bug</option>
+        <option value="duplicate">Duplicate</option>
+        <option value="wont-fix">Won't Fix</option>
+      </select>
+      <label for="resolution_notes">Notes (optional)</label>
+      <textarea name="resolution_notes" id="resolution_notes" placeholder="Describe the resolution..."></textarea>
+      <div class="resolve-actions">
+        <button type="button" class="btn-top" onclick="closeResolveDialog()">Cancel</button>
+        <button type="submit" class="btn-top btn-top-primary">Resolve</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

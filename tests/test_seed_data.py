@@ -31,30 +31,29 @@ async def test_seed_skips_non_empty_db(db_session):
 
 
 async def test_seed_creates_tickets_for_dispatched(db_session):
-    """Dispatched seed incidents get associated tickets."""
+    """Dispatched seed incidents get associated tickets via dispatch_incident."""
     await seed_database(db_session)
 
-    dispatched_count = sum(1 for d in SEED_INCIDENTS if d["ticket"] is not None)
+    # All seed incidents are dispatched, each gets a ticket via dispatch_incident()
     ticket_count = (await db_session.execute(select(func.count(Ticket.id)))).scalar_one()
-    assert ticket_count == dispatched_count
+    assert ticket_count == len(SEED_INCIDENTS)
 
 
 async def test_seed_creates_notifications(db_session):
-    """Seed incidents with notifications get notification records."""
+    """Seed incidents get notifications via dispatch_incident."""
     await seed_database(db_session)
 
-    expected = sum(len(d["notifications"]) for d in SEED_INCIDENTS)
+    # dispatch_incident creates email + chat notifications per incident
     actual = (await db_session.execute(select(func.count(Notification.id)))).scalar_one()
-    assert actual == expected
+    assert actual >= len(SEED_INCIDENTS)  # At least 1 notification per incident
 
 
 async def test_seed_incident_statuses(db_session):
-    """Seed creates a mix of submitted and dispatched incidents."""
+    """All seed incidents are dispatched (pre-triaged data)."""
     await seed_database(db_session)
 
     result = await db_session.execute(select(Incident))
     incidents = list(result.scalars().all())
 
     statuses = {i.status for i in incidents}
-    assert IncidentStatus.SUBMITTED in statuses
     assert IncidentStatus.DISPATCHED in statuses

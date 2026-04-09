@@ -1,0 +1,17 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Not Found — Triagista{% endblock %}
+
+{% block topbar %}
+<span class="topbar-id" data-testid="topbar-title">Not Found</span>
+{% endblock %}
+
+{% block content %}
+<div class="view-animate">
+  <div class="not-found-panel">
+    <h2>404</h2>
+    <p>This incident does not exist or has been removed.</p>
+    <a href="/incidents">Back to Incidents</a>
+  </div>
+</div>
+{% endblock %}

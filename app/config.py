@@ -12,8 +12,17 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://redis:6379/0"
 
+    # Triage provider: "anthropic", "langchain", or "managed"
+    triage_provider: str = "anthropic"
+
     # Anthropic
     anthropic_api_key: str = ""  # Validated at startup for non-dev envs
+
+    # Google (for LangChain provider)
+    google_api_key: str = ""
+
+    # Groq (for LangChain provider fallback)
+    groq_api_key: str = ""
 
     # Langfuse
     langfuse_secret_key: str = ""

@@ -20,8 +20,8 @@ from app.pipeline.guardrail import validate_input
 from app.pipeline.guardrail.rate_limit import check_rate_limit, record_submission
 from app.pipeline.triage import run_triage
 from app.schemas.incident import IncidentCreate, IncidentListResponse, IncidentResponse
-from app.services.codebase_indexer import CodebaseIndex
-from app.services.observability import pipeline_span, trace_llm_call
+from app.services.codebase_indexer import CodebaseIndex, search_files
+from app.services.observability import pipeline_span, trace_triage_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -185,9 +185,15 @@ async def get_incident(
 async def triage_incident(
     incident_id: uuid.UUID,
     request: Request,
+    provider: str = "",
     db: AsyncSession = Depends(get_db),
 ) -> Incident:
-    """Run AI triage on an incident. Updates the incident with triage results."""
+    """Run AI triage on an incident. Updates the incident with triage results.
+
+    Args:
+        provider: Optional override — "anthropic", "langchain", or "managed".
+                  Falls back to TRIAGE_PROVIDER env var if empty.
+    """
     query = (
         select(Incident)
         .options(selectinload(Incident.attachments))
@@ -205,10 +211,19 @@ async def triage_incident(
             detail="Incident already triaged",
         )
 
-    if not settings.anthropic_api_key:
+    # Resolve which provider to use
+    triage_provider = provider if provider in ("anthropic", "langchain", "managed") else settings.triage_provider
+
+    # API key check only needed for anthropic provider
+    if triage_provider == "anthropic" and not settings.anthropic_api_key:
         raise HTTPException(
             status_code=503,
             detail="Triage unavailable: ANTHROPIC_API_KEY not configured",
+        )
+    if triage_provider == "langchain" and not settings.google_api_key and not settings.groq_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="LangChain provider requires GOOGLE_API_KEY or GROQ_API_KEY",
         )
 
     # Update status to triaging
@@ -223,6 +238,27 @@ async def triage_incident(
     for att in incident.attachments:
         attachment_descriptions.append(f"{att.filename} ({att.mime_type}, {att.file_size} bytes)")
 
+    # --- Pipeline stage 1: Guardrail (already ran at submission) ---
+    guardrail_data = {
+        "description": incident.description[:500],
+        "passed": (incident.validation_flags or {}).get("passed", True),
+        "injection_score": incident.injection_score or 0.0,
+        "flags": (incident.validation_flags or {}).get("flags", []),
+    }
+
+    # --- Pipeline stage 2: Context retrieval ---
+    context_files = search_files(codebase_index, incident.description, max_results=5)
+    context_data = {
+        "search_query": incident.description[:200],
+        "total_indexed_files": codebase_index.file_count,
+        "files_found": len(context_files),
+        "files": [
+            {"path": f.path, "extension": f.extension, "size_lines": len(f.first_lines.splitlines())}
+            for f in context_files
+        ],
+    }
+
+    # --- Pipeline stage 3: Triage (LLM call) ---
     import time as _time
 
     try:
@@ -232,6 +268,7 @@ async def triage_incident(
                 description=incident.description,
                 codebase_index=codebase_index,
                 attachment_descriptions=attachment_descriptions or None,
+                provider_override=triage_provider,
             )
         triage_ms = (_time.monotonic() - t0) * 1000
     except Exception:
@@ -239,22 +276,6 @@ async def triage_incident(
         incident.status = IncidentStatus.SUBMITTED  # revert status
         await db.commit()
         raise HTTPException(status_code=502, detail="Triage agent failed")
-
-    # Record LLM call in Langfuse
-    trace_llm_call(
-        incident_id=str(incident_id),
-        model="claude-haiku-4-5-20251001",
-        input_text=incident.description,
-        output_data={
-            "severity": triage_result.severity,
-            "category": triage_result.category,
-            "confidence": triage_result.confidence,
-            "affected_component": triage_result.affected_component,
-        },
-        tokens_in=triage_result.tokens_in,
-        tokens_out=triage_result.tokens_out,
-        duration_ms=triage_ms,
-    )
 
     # Update incident with triage results
     incident.severity = triage_result.severity
@@ -270,9 +291,45 @@ async def triage_incident(
 
     await db.flush()
 
-    # Auto-dispatch: create ticket + notifications
+    # --- Pipeline stage 4: Dispatch ---
     with pipeline_span("dispatch", {"incident_id": str(incident_id)}):
         dispatch_result = await dispatch_incident(incident, db)
+
+    # --- Record full pipeline trace in Langfuse ---
+    trace_triage_pipeline(
+        str(incident_id),
+        guardrail=guardrail_data,
+        context_retrieval=context_data,
+        generation={
+            "model": "claude-haiku-4-5-20251001",
+            "input": incident.description,
+            "output": str({
+                "severity": triage_result.severity,
+                "category": triage_result.category,
+                "confidence": triage_result.confidence,
+                "affected_component": triage_result.affected_component,
+                "technical_summary": triage_result.technical_summary[:300],
+                "root_cause_hypothesis": triage_result.root_cause_hypothesis[:200],
+                "recommended_actions_count": len(triage_result.recommended_actions),
+                "related_files_count": len(triage_result.related_files),
+            }),
+            "tokens_in": triage_result.tokens_in,
+            "tokens_out": triage_result.tokens_out,
+            "duration_ms": triage_ms,
+            "severity": triage_result.severity,
+            "category": triage_result.category,
+            "confidence": triage_result.confidence,
+            "affected_component": triage_result.affected_component,
+            "suggested_assignee": triage_result.suggested_assignee,
+        },
+        dispatch={
+            "ticket_id": dispatch_result.ticket_id,
+            "email_sent": dispatch_result.email_sent,
+            "email_recipient": dispatch_result.email_recipient,
+            "chat_sent": dispatch_result.chat_sent,
+            "chat_channel": dispatch_result.chat_channel,
+        },
+    )
 
     await db.refresh(incident)
     await db.refresh(incident, attribute_names=["attachments"])

@@ -1,0 +1,147 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Report Incident — Triagista{% endblock %}
+
+{% block topbar %}
+<span class="topbar-id" data-testid="topbar-title">Report New Incident</span>
+{% endblock %}
+
+{% block content %}
+<div class="view-animate">
+  <div class="submit-panel">
+    <div class="panel">
+      <div class="panel-header">New Incident Report</div>
+      <div class="panel-body">
+        <form action="/api/incidents" method="post" enctype="multipart/form-data" id="submit-form" data-testid="submit-form">
+          <div class="form-group">
+            <label for="reporter_name">Your Name (optional)</label>
+            <input type="text" name="reporter_name" id="reporter_name" placeholder="Jane Smith">
+          </div>
+          <div class="form-group">
+            <label for="reporter_email">Email *</label>
+            <input type="email" name="reporter_email" id="reporter_email" placeholder="oncall@example.com" required data-testid="input-email">
+          </div>
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea name="description" id="description" placeholder="Describe the incident in detail..." required data-testid="input-description"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="files">Attachments (optional)</label>
+            <input type="file" name="files" id="files" multiple
+                   accept="image/*,.pdf,.json,.csv,.txt"
+                   style="font-size:12px;color:var(--text-dim)">
+          </div>
+
+          <div class="form-group">
+            <label>Triage Agent</label>
+            <div class="provider-cards" data-testid="provider-selector">
+
+              {# --- Card 1: Basic (LangChain) --- #}
+              <div class="provider-card {% if not has_langchain %}disabled{% endif %}"
+                   data-provider="langchain" onclick="selectProvider(this)" data-testid="provider-langchain">
+                <span class="provider-tag tag-free">Free</span>
+                <div style="display:flex;align-items:center;margin-bottom:4px">
+                  <span class="provider-check"></span>
+                  <span class="provider-name">Basic</span>
+                </div>
+                <div class="provider-model">Gemini 2.0 Flash</div>
+                <div class="provider-desc">LangChain orchestration with Google's free-tier model. Fast, zero API cost.</div>
+                {% if not has_langchain %}
+                <div style="font-size:10px;color:var(--red);margin-top:6px">Requires GOOGLE_API_KEY</div>
+                {% endif %}
+              </div>
+
+              {# --- Card 2: Premium (Anthropic SDK) --- #}
+              <div class="provider-card {% if not has_anthropic %}disabled{% endif %}"
+                   data-provider="anthropic" onclick="selectProvider(this)" data-testid="provider-anthropic">
+                <span class="provider-tag tag-premium">Premium</span>
+                <div style="display:flex;align-items:center;margin-bottom:4px">
+                  <span class="provider-check"></span>
+                  <span class="provider-name">Premium</span>
+                </div>
+                <div class="provider-model">Claude Haiku 4.5</div>
+                <div class="provider-desc">Anthropic SDK with structured tool_use. Highest accuracy triage via Claude.</div>
+                {% if not has_anthropic %}
+                <div style="font-size:10px;color:var(--red);margin-top:6px">Requires ANTHROPIC_API_KEY</div>
+                {% endif %}
+              </div>
+
+              {# --- Card 3: Experimental (Managed Agents) --- #}
+              <div class="provider-card {% if not has_anthropic %}disabled{% endif %}"
+                   data-provider="managed" onclick="selectProvider(this)" data-testid="provider-managed">
+                <span class="provider-tag tag-hot">Experimental</span>
+                <div style="display:flex;align-items:center;margin-bottom:4px">
+                  <span class="provider-check"></span>
+                  <span class="provider-name">Managed Agents</span>
+                </div>
+                <div class="provider-model">Claude Agent SDK</div>
+                <div class="provider-desc">Anthropic's managed agent framework. Autonomous multi-step reasoning.</div>
+                {% if not has_anthropic %}
+                <div style="font-size:10px;color:var(--red);margin-top:6px">Requires ANTHROPIC_API_KEY</div>
+                {% endif %}
+              </div>
+
+            </div>
+          </div>
+
+          <button type="submit" class="btn-top btn-top-primary" style="margin-top: 8px;" data-testid="btn-submit">Submit Incident</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Available providers (from server)
+var available = {
+  langchain: {{ has_langchain|tojson }},
+  anthropic: {{ has_anthropic|tojson }},
+  managed: {{ has_anthropic|tojson }}
+};
+
+// Determine best default: prefer anthropic if available, else langchain, else managed
+var defaultProvider = available.anthropic ? 'anthropic' : (available.langchain ? 'langchain' : 'managed');
+var selectedProvider = localStorage.getItem('sre-triage-provider') || defaultProvider;
+
+// If saved provider is not available, fall back
+if (!available[selectedProvider]) selectedProvider = defaultProvider;
+
+// Restore selection on load
+(function() {
+  var card = document.querySelector('[data-provider="' + selectedProvider + '"]:not(.disabled)');
+  if (card) selectProvider(card);
+})();
+
+function selectProvider(el) {
+  if (el.classList.contains('disabled')) return;
+  document.querySelectorAll('.provider-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedProvider = el.dataset.provider;
+  localStorage.setItem('sre-triage-provider', selectedProvider);
+}
+
+document.getElementById('submit-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var form = e.target;
+  var btn = form.querySelector('[data-testid="btn-submit"]');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="triage-spinner"></span> Submitting...';
+
+  fetch('/api/incidents', { method: 'POST', body: new FormData(form) })
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || JSON.stringify(d)); });
+      return r.json();
+    })
+    .then(function(data) {
+      window.location.href = '/incidents/' + data.id;
+    })
+    .catch(function(err) {
+      alert('Error: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Submit Incident';
+    });
+});
+</script>
+{% endblock %}

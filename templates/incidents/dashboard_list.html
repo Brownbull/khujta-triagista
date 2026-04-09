@@ -1,0 +1,57 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Incidents — Triagista{% endblock %}
+
+{% block topbar %}
+<span class="topbar-id" data-testid="topbar-title">All Incidents</span>
+<span style="font-size: 11px; color: var(--text-dim); margin-left: 4px;">({{ total }})</span>
+{% endblock %}
+
+{% block settings_margin %}auto{% endblock %}
+
+{% block content %}
+<div class="view-animate">
+  <!-- Search bar -->
+  <form class="search-bar" action="/incidents/search" method="get" data-testid="search-form">
+    <input type="text" name="q" placeholder="Search by incident ID (e.g. 8b79e1)..."
+           value="{{ search_query|default('') }}" data-testid="search-input">
+    <button type="submit">Search</button>
+  </form>
+
+  {% if search_query is defined and search_query %}
+  <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
+    Showing results for "<strong>{{ search_query }}</strong>"
+    &mdash; <a href="/incidents" style="color: var(--accent);">Clear</a>
+  </p>
+  {% endif %}
+
+  <div class="panel" style="border-radius: 8px; overflow: hidden;">
+    <table class="incidents-table" data-testid="incidents-table">
+      <thead>
+        <tr><th>ID</th><th>Status</th><th>Severity</th><th>Description</th><th>Reporter</th><th>Created</th></tr>
+      </thead>
+      <tbody>
+        {% for inc in incidents %}
+        {% set short_id = inc.id|string %}
+        <tr onclick="window.location='/incidents/{{ inc.id }}'" data-testid="incident-row">
+          <td class="id-col">{{ short_id[:8] }}</td>
+          <td><span class="badge badge-{{ inc.status.value }}">{{ inc.status.value|capitalize }}</span></td>
+          <td>
+            {% if inc.severity %}
+            <span class="badge badge-{{ inc.severity|lower }}">{{ inc.severity }}</span>
+            {% else %}
+            <span class="badge" style="background:rgba(100,116,139,0.1);color:var(--text-dim)">&mdash;</span>
+            {% endif %}
+          </td>
+          <td class="desc-col">{{ inc.description[:80] }}</td>
+          <td style="color:var(--text-dim)">{{ inc.reporter_email }}</td>
+          <td class="time-col">{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-dim)">No incidents found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

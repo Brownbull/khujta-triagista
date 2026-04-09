@@ -1,17 +1,19 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import engine, async_session
+from app.database import engine, async_session, get_db
 from app.models import Base
 from app.routes.incidents import router as incidents_api_router
 from app.routes.pages import router as pages_router
 from app.services.codebase_indexer import build_index
 from app.services.observability import setup_telemetry
-from app.services.seed_data import seed_database
+from app.services.seed_data import seed_database, seed_langfuse_traces
 from app.services.seed_langfuse import seed_langfuse
 
 logger = logging.getLogger(__name__)
@@ -43,9 +45,11 @@ async def lifespan(app: FastAPI):
             settings.langfuse_secret_key = keys["secret_key"]
             logger.info("Langfuse keys auto-configured from seed")
 
-        # Seed sample incidents
+        # Seed sample incidents + Langfuse traces
         async with async_session() as db:
-            await seed_database(db)
+            seeded_incidents = await seed_database(db)
+            if seeded_incidents:
+                seed_langfuse_traces(seeded_incidents)
 
     yield
     # Shutdown
@@ -53,8 +57,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SRE Triage Agent",
-    description="AI-powered SRE Incident Intake & Triage Agent",
+    title="Triagista",
+    description="AI-powered SRE Incident Intake & Triage Agent — Triagista",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -69,8 +73,14 @@ app.include_router(pages_router)
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok", "service": "sre-triage-agent"}
+async def health(db: AsyncSession = Depends(get_db)):
+    try:
+        await db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+    status = "ok" if db_status == "connected" else "degraded"
+    return {"status": status, "service": "sre-triage-agent", "database": db_status}
 
 
 @app.get("/api/observability")

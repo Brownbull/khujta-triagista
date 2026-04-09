@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" class="font-medium">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Triagista{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/triagista-icon-v5.png" type="image/png">
+    <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+
+<!-- ======================== SIDEBAR ======================== -->
+<aside class="sidebar">
+  <a href="/incidents" class="sidebar-logo"><img src="/static/triagista-icon-v5.png" alt="" width="26" height="26"> Triagista</a>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Navigation</div>
+    <a class="sidebar-item {% if page == 'list' %}active{% endif %}" href="/incidents" data-testid="nav-incidents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      All Incidents
+    </a>
+    <a class="sidebar-item {% if page == 'new' %}active{% endif %}" href="/incidents/new" data-testid="nav-report">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Report New
+    </a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Recent Incidents</div>
+
+    {% for inc in recent_incidents[:6] %}
+    {% set short_id = inc.id|string %}
+    <a class="incident-mini {% if incident is defined and incident.id == inc.id %}active{% endif %}"
+       href="/incidents/{{ inc.id }}" data-testid="sidebar-incident">
+      <div class="inc-id">INC-{{ short_id[:8] }}</div>
+      <div class="inc-desc">{{ inc.description[:50] }}</div>
+      <div class="inc-badges">
+        {% if inc.severity %}
+        <span class="inc-badge badge-{{ inc.severity|lower }}">{{ inc.severity }}</span>
+        {% endif %}
+        <span class="inc-badge badge-{{ inc.status.value }}">{{ inc.status.value|capitalize }}</span>
+      </div>
+    </a>
+    {% endfor %}
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Tools</div>
+    <a class="sidebar-item" href="http://localhost:3100" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>
+      Langfuse
+    </a>
+    <a class="sidebar-item" href="/docs" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+      API Docs
+    </a>
+  </nav>
+  <div class="sidebar-footer">v0.1.0 &bull; {{ triage_provider|default('anthropic') }}</div>
+</aside>
+
+<!-- ======================== MAIN ======================== -->
+<div class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    {% block topbar %}
+    <span class="topbar-id" data-testid="topbar-title">All Incidents</span>
+    {% endblock %}
+
+    <!-- Settings gear (always visible) -->
+    <div style="position: relative; margin-left: {% block settings_margin %}auto{% endblock %}; flex-shrink: 0;">
+      <button class="settings-trigger" onclick="toggleSettings()" id="settings-btn" data-testid="settings-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="settings-dropdown" id="settings-dropdown">
+        <div class="settings-section">
+          <div class="settings-label">Theme</div>
+          <div class="settings-options">
+            <button class="settings-opt active" data-setting="theme" data-value="dark" onclick="changeSetting('theme','dark')">Dark</button>
+            <button class="settings-opt" data-setting="theme" data-value="light" onclick="changeSetting('theme','light')">Light</button>
+          </div>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="settings-section">
+          <div class="settings-label">Font Size</div>
+          <div class="settings-options">
+            <button class="settings-opt" data-setting="fontSize" data-value="small" onclick="changeSetting('fontSize','small')">Small</button>
+            <button class="settings-opt active" data-setting="fontSize" data-value="medium" onclick="changeSetting('fontSize','medium')">Medium</button>
+            <button class="settings-opt" data-setting="fontSize" data-value="large" onclick="changeSetting('fontSize','large')">Large</button>
+          </div>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="settings-section">
+          <div class="settings-label">Font</div>
+          <div class="settings-options">
+            <button class="settings-opt" data-setting="font" data-value="Inter" onclick="changeSetting('font','Inter')">Inter</button>
+            <button class="settings-opt" data-setting="font" data-value="Outfit" onclick="changeSetting('font','Outfit')">Outfit</button>
+            <button class="settings-opt active" data-setting="font" data-value="IBM Plex Sans" onclick="changeSetting('font','IBM Plex Sans')">IBM Plex Sans</button>
+            <button class="settings-opt" data-setting="font" data-value="Space Grotesk" onclick="changeSetting('font','Space Grotesk')">Space Grotesk</button>
+            <button class="settings-opt" data-setting="font" data-value="Fira Sans" onclick="changeSetting('font','Fira Sans')">Fira Sans</button>
+            <button class="settings-opt" data-setting="font" data-value="DM Sans" onclick="changeSetting('font','DM Sans')">DM Sans</button>
+            <button class="settings-opt" data-setting="font" data-value="Source Sans 3" onclick="changeSetting('font','Source Sans 3')">Source Sans 3</button>
+            <button class="settings-opt" data-setting="font" data-value="JetBrains Mono" onclick="changeSetting('font','JetBrains Mono')">JetBrains Mono</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span class="statusbar-dot"></span>
+    <span>Connected</span><span>|</span>
+    <span>PostgreSQL OK</span><span>|</span>
+    <span>{{ triage_provider|default('anthropic') }}</span><span>|</span>
+    <span>Langfuse tracing active</span>
+    <span style="margin-left:auto">v0.1.0</span>
+  </div>
+</div>
+
+<script src="/static/dashboard.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import cast, select, func, String
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,40 +16,46 @@ from app.services.seed_data import seed_database
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="templates")
 
-_seed_checked = False
-
 
 async def _ensure_seed(db: AsyncSession) -> None:
-    """Re-seed if DB is empty in development mode. Runs once per process."""
-    global _seed_checked
-    if _seed_checked or settings.app_env != "development":
+    """Re-seed if DB is empty in development mode."""
+    if settings.app_env != "development":
         return
-    _seed_checked = True
     count_result = await db.execute(select(func.count(Incident.id)))
     if count_result.scalar_one() == 0:
         await seed_database(db)
 
 
-@router.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: AsyncSession = Depends(get_db)):
-    """Home page — shows recent incidents."""
-    await _ensure_seed(db)
+async def _recent_incidents(db: AsyncSession, limit: int = 6) -> list[Incident]:
+    """Fetch recent incidents for sidebar."""
     query = (
         select(Incident)
-        .options(selectinload(Incident.attachments))
         .order_by(Incident.created_at.desc())
-        .limit(20)
+        .limit(limit)
     )
     result = await db.execute(query)
-    incidents = result.scalars().all()
+    return list(result.scalars().all())
 
-    count_result = await db.execute(select(func.count(Incident.id)))
-    total = count_result.scalar_one()
-    return templates.TemplateResponse(
-        request,
-        "incidents/list.html",
-        context={"incidents": incidents, "total": total, "page": "list"},
-    )
+
+def _base_context(page: str, recent: list[Incident]) -> dict:
+    """Common template context for all dashboard pages."""
+    has_anthropic = bool(settings.anthropic_api_key)
+    has_langchain = bool(settings.google_api_key or settings.groq_api_key)
+    return {
+        "page": page,
+        "recent_incidents": recent,
+        "triage_provider": getattr(settings, "triage_provider", "anthropic"),
+        "has_anthropic": has_anthropic,
+        "has_langchain": has_langchain,
+        "now": datetime.now(timezone.utc),
+    }
+
+
+@router.get("/")
+async def index(db: AsyncSession = Depends(get_db)):
+    """Home page — redirect to incident list."""
+    await _ensure_seed(db)
+    return RedirectResponse(url="/incidents", status_code=302)
 
 
 @router.get("/incidents", response_class=HTMLResponse)
@@ -67,10 +74,16 @@ async def incident_list_page(request: Request, db: AsyncSession = Depends(get_db
     count_result = await db.execute(select(func.count(Incident.id)))
     total = count_result.scalar_one()
 
+    recent = await _recent_incidents(db)
+
     return templates.TemplateResponse(
         request,
-        "incidents/list.html",
-        context={"incidents": incidents, "total": total, "page": "list"},
+        "incidents/dashboard_list.html",
+        context={
+            **_base_context("list", recent),
+            "incidents": incidents,
+            "total": total,
+        },
     )
 
 
@@ -83,11 +96,9 @@ async def incident_search_page(
     """Search incidents by partial ID (first 1-8 chars of UUID)."""
     await _ensure_seed(db)
     incidents = []
-    # Sanitize: strip, remove spaces, cap at 8 chars, alphanumeric only
     q = "".join(c for c in q.strip() if c.isalnum() or c == "-")[:8]
 
     if q:
-        # Search by partial UUID (cast to text and ILIKE)
         pattern = f"{q}%"
         query = (
             select(Incident)
@@ -99,25 +110,28 @@ async def incident_search_page(
         result = await db.execute(query)
         incidents = list(result.scalars().all())
 
+    recent = await _recent_incidents(db)
+
     return templates.TemplateResponse(
         request,
-        "incidents/list.html",
+        "incidents/dashboard_list.html",
         context={
+            **_base_context("list", recent),
             "incidents": incidents,
             "total": len(incidents),
-            "page": "list",
             "search_query": q,
         },
     )
 
 
 @router.get("/incidents/new", response_class=HTMLResponse)
-async def incident_new_page(request: Request):
+async def incident_new_page(request: Request, db: AsyncSession = Depends(get_db)):
     """Submit a new incident form."""
+    recent = await _recent_incidents(db)
     return templates.TemplateResponse(
         request,
-        "incidents/submit.html",
-        context={"page": "new"},
+        "incidents/dashboard_submit.html",
+        context=_base_context("new", recent),
     )
 
 
@@ -125,9 +139,10 @@ async def incident_new_page(request: Request):
 async def incident_detail_page(
     request: Request,
     incident_id: uuid.UUID,
+    view: str = "",
     db: AsyncSession = Depends(get_db),
 ):
-    """Incident detail page."""
+    """Incident detail page (detail or chat view)."""
     query = (
         select(Incident)
         .options(
@@ -140,16 +155,23 @@ async def incident_detail_page(
     result = await db.execute(query)
     incident = result.scalar_one_or_none()
 
+    recent = await _recent_incidents(db)
+
     if not incident:
         return templates.TemplateResponse(
             request,
-            "incidents/not_found.html",
-            context={"page": "detail"},
+            "incidents/dashboard_not_found.html",
+            context=_base_context("detail", recent),
             status_code=404,
         )
 
+    template = "incidents/dashboard_chat.html" if view == "chat" else "incidents/dashboard_detail.html"
+
     return templates.TemplateResponse(
         request,
-        "incidents/detail.html",
-        context={"incident": incident, "page": "detail"},
+        template,
+        context={
+            **_base_context("detail", recent),
+            "incident": incident,
+        },
     )

@@ -173,76 +173,37 @@ async def run_triage(
     description: str,
     codebase_index: CodebaseIndex,
     attachment_descriptions: list[str] | None = None,
+    provider_override: str = "",
 ) -> TriageResult:
     """Run the triage agent on an incident description.
+
+    This is a thin facade that delegates to the configured provider
+    (Anthropic, LangChain, or Managed).
 
     Args:
         description: The incident description from the reporter.
         codebase_index: Pre-built index of the target codebase.
         attachment_descriptions: Optional text descriptions of attached files.
+        provider_override: If set, use this provider instead of the default.
 
     Returns:
         TriageResult with the structured triage assessment.
-
-    Raises:
-        anthropic.APIError: If the Claude API call fails.
-        ValueError: If the model response doesn't contain valid triage data.
     """
-    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    from app.pipeline.triage.provider import get_provider
 
-    # Build context
+    provider_name = provider_override or getattr(settings, "triage_provider", "anthropic")
+    provider = get_provider(provider_name)
+
     codebase_context = _build_codebase_context(codebase_index, description)
 
-    # Build user message
-    user_parts: list[str] = [
-        "## Incident Report",
-        "",
-        description,
-    ]
-
-    if attachment_descriptions:
-        user_parts.append("")
-        user_parts.append("## Attached Files")
-        for desc in attachment_descriptions:
-            user_parts.append(f"- {desc}")
-
-    user_parts.append("")
-    user_parts.append("## Target Codebase Context")
-    user_parts.append(codebase_context)
-    user_parts.append("")
-    user_parts.append(
-        "Analyze this incident and submit your triage assessment using the submit_triage tool."
+    logger.info(
+        "Running triage via %s provider (description: %d chars)",
+        provider_name,
+        len(description),
     )
 
-    user_message = "\n".join(user_parts)
-
-    logger.info("Running triage agent (description length: %d chars)", len(description))
-
-    response = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=2048,
-        system=TRIAGE_SYSTEM_PROMPT,
-        tools=[TRIAGE_TOOL],
-        tool_choice={"type": "tool", "name": "submit_triage"},
-        messages=[{"role": "user", "content": user_message}],
+    return await provider.triage(
+        description=description,
+        codebase_context=codebase_context,
+        attachment_descriptions=attachment_descriptions,
     )
-
-    # Extract tool use result
-    for block in response.content:
-        if block.type == "tool_use" and block.name == "submit_triage":
-            data = block.input
-            return TriageResult(
-                severity=data["severity"],
-                category=data["category"],
-                affected_component=data["affected_component"],
-                technical_summary=data["technical_summary"],
-                root_cause_hypothesis=data["root_cause_hypothesis"],
-                suggested_assignee=data["suggested_assignee"],
-                confidence=data["confidence"],
-                recommended_actions=data["recommended_actions"],
-                related_files=data["related_files"],
-                tokens_in=response.usage.input_tokens,
-                tokens_out=response.usage.output_tokens,
-            )
-
-    raise ValueError("Triage agent did not return a valid tool_use response")

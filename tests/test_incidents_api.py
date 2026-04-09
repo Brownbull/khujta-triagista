@@ -148,7 +148,7 @@ async def test_pages_render_html(client):
     resp = await client.get("/incidents")
     assert resp.status_code == 200
     assert "text/html" in resp.headers["content-type"]
-    assert "SRE Triage Agent" in resp.text
+    assert "Triagista" in resp.text
 
     # New incident form
     resp = await client.get("/incidents/new")
@@ -169,8 +169,8 @@ async def test_incident_detail_page_renders(client):
 
     resp = await client.get(f"/incidents/{incident_id}")
     assert resp.status_code == 200
-    assert "page@example.com" in resp.text
-    assert "No triage yet" in resp.text  # Not triaged yet
+    assert "detail page renders correctly" in resp.text  # Description shown
+    assert "not been triaged yet" in resp.text  # Not triaged yet
 
 
 async def test_incident_not_found_page(client):
