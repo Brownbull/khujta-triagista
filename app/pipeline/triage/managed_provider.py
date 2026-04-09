@@ -13,7 +13,7 @@ import logging
 import httpx
 
 from app.config import settings
-from app.pipeline.triage.agent import TRIAGE_TOOL, TriageResult
+from app.pipeline.triage.agent import TriageResult
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +70,13 @@ class ManagedProvider:
                 json={
                     "agent": settings.managed_agent_id,
                     "environment_id": settings.managed_environment_id,
-                    "custom_tools": [TRIAGE_TOOL],
                 },
             )
-            session_resp.raise_for_status()
+            if session_resp.status_code != 200:
+                body = session_resp.text
+                logger.error("Managed agent session creation failed: %d %s", session_resp.status_code, body)
+                raise RuntimeError(f"Managed agent session creation failed ({session_resp.status_code}): {body}")
+
             session = session_resp.json()
             sid = session["id"]
             logger.info("ManagedProvider: session created: %s", sid)

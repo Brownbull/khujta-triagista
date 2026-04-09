@@ -288,7 +288,7 @@ async def triage_incident(
     incident.suggested_assignee = triage_result.suggested_assignee
     incident.confidence = triage_result.confidence
     incident.recommended_actions = triage_result.recommended_actions
-    incident.related_files = triage_result.related_files
+    incident.related_files = [f.model_dump() for f in triage_result.related_files]
     incident.status = IncidentStatus.DISPATCHED
 
     await db.flush()

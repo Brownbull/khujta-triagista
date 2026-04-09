@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import anthropic
 from pydantic import BaseModel, Field
+from typing import Literal
 
 if TYPE_CHECKING:
     from app.pipeline.knowledge.loader import KnowledgeLoader
@@ -133,6 +134,12 @@ TRIAGE_TOOL = {
 }
 
 
+class RelatedFile(BaseModel):
+    """A codebase file relevant to the incident."""
+    path: str = Field(description="File path relative to repo root")
+    relevance: str = Field(description="Why this file is relevant to the incident")
+
+
 class TriageResult(BaseModel):
     """Structured triage output — produced by all engines.
 
@@ -140,35 +147,38 @@ class TriageResult(BaseModel):
     `with_structured_output(TriageResult)` for schema-enforced responses.
     """
 
-    severity: str
-    category: str
+    severity: Literal["P1", "P2", "P3", "P4"]
+    category: Literal[
+        "payment-processing", "checkout", "inventory", "shipping",
+        "authentication", "admin", "storefront", "api", "infrastructure", "other",
+    ]
     affected_component: str
     technical_summary: str
     root_cause_hypothesis: str
-    suggested_assignee: str
+    suggested_assignee: Literal[
+        "payments-team", "platform-team", "frontend-team",
+        "infrastructure-team", "security-team", "fulfillment-team",
+    ]
     confidence: float = Field(ge=0.0, le=1.0)
     recommended_actions: list[str]
-    related_files: list[dict[str, str]]
+    related_files: list[RelatedFile]
     tokens_in: int = 0
     tokens_out: int = 0
     engine: str = "anthropic"
 
 
-def verify_files(related_files: list[dict[str, str]], codebase_dir: str) -> list[dict[str, str]]:
+def verify_files(related_files: list[RelatedFile], codebase_dir: str) -> list[RelatedFile]:
     """Verify each related file exists in the mounted codebase.
 
-    Adds a 'verified' key to each file dict. Marks unverified files.
+    Marks unverified files in the relevance field.
     """
     verified = []
     for f in related_files:
-        path = f.get("path", "")
-        clean_path = path.split("#")[0]  # strip line references
+        clean_path = f.path.split("#")[0]  # strip line references
         full_path = os.path.join(codebase_dir, clean_path)
-        f_copy = dict(f)
-        f_copy["verified"] = os.path.exists(full_path)
-        if not f_copy["verified"]:
-            f_copy["relevance"] = f"[UNVERIFIED] {f_copy.get('relevance', '')}"
-        verified.append(f_copy)
+        if not os.path.exists(full_path):
+            f = RelatedFile(path=f.path, relevance=f"[UNVERIFIED] {f.relevance}")
+        verified.append(f)
     return verified
 
 
@@ -259,8 +269,9 @@ async def run_triage(
         result.root_cause_hypothesis = sanitize_text(result.root_cause_hypothesis)
         result.affected_component = sanitize_text(result.affected_component)
         result.recommended_actions = [sanitize_text(a) for a in result.recommended_actions]
-        for f in result.related_files:
-            if "relevance" in f:
-                f["relevance"] = sanitize_text(f["relevance"])
+        result.related_files = [
+            RelatedFile(path=f.path, relevance=sanitize_text(f.relevance))
+            for f in result.related_files
+        ]
 
     return result
