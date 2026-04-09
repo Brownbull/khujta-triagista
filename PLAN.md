@@ -21,7 +21,6 @@
 | **9. Resolution** | Acknowledge/resolve lifecycle, reporter notify | SHOULD | ✅ Done | `phase9` | 8 |
 | **10. Extras** | Severity reasoning, runbooks, dedup | COULD | ⏭ Skipped | — | — |
 | **11. Documentation** | README, AGENTS_USE.md, SCALING.md, QUICKGUIDE.md, LICENSE | MUST | ✅ Done | `phase11` | — |
-| **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 | **13. UI Polish** | Triage button fix, HTMX vendoring, favicon, auto-redirect, seed resilience, health check | SHOULD | ✅ Done | — | — |
 | **14. UI Redesign** | Ops dashboard + chat view + settings (based on mockup 13) | MUST | ✅ Done | `phase14` | — |
 | **15. Agent Providers** | Strategy pattern: Anthropic, LangChain, Managed Agents | MUST | ✅ Done | `phase15` | — |
@@ -32,6 +31,11 @@
 | **20. Anthropic Upgrade** | Knowledge context integration for Premium engine | MUST | ✅ Done | `e33f7a3` | — |
 | **21. Managed Agents** | Real Anthropic Managed Agents API (REST polling) | SHOULD | ✅ Done | `e33f7a3` | — |
 | **22. PII Detection** | detect_pii + sanitize_for_output on all outputs | COULD | ✅ Done | `phase22` | — |
+| **23. Store Engine + Tokens** | Persist engine name, token counts in Incident model | MUST | 🔲 Pending | — | — |
+| **24. Enrich Detail Page** | Pipeline progress, engine badge, expandable dispatch, component | MUST | 🔲 Pending | — | — |
+| **25. Explanation Layers** | General / Specialist / Non-technical views of diagnosis | SHOULD | 🔲 Pending | — | — |
+| **26. Responsive Layout** | Desktop portrait/landscape + mobile (<768px) | SHOULD | 🔲 Pending | — | — |
+| **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 
 **Test total: 80 pytest + 16 Playwright E2E**
 
@@ -61,7 +65,8 @@ Auto-dispatch (ticket + email + chat) → Acknowledge → Resolve → Reporter n
 - Full documentation: README, AGENTS_USE.md, SCALING.md, QUICKGUIDE.md, LICENSE
 
 ### What's remaining
-- **Phase 12**: Demo video recording
+- **Phase 23-26**: Detail page enrichment + responsive layout
+- **Phase 12**: Demo video recording (last)
 
 ---
 
@@ -321,6 +326,87 @@ Phase 17 (Knowledge) ──→ Phase 19 (LangChain upgrade)
        └──→ Phase 21 (Managed Agents)
 Phase 18 (TriageResult + VERIFY) ──→ Phase 19
 Phase 22 (PII) — independent, can run anytime
+```
+
+---
+
+## Phase 23: Store Engine + Tokens in DB (Pending)
+
+**Goal**: Persist triage engine name and token usage so the detail page can display them.
+
+### Current gap
+`TriageResult` has `engine`, `tokens_in`, `tokens_out` but these are lost after the request — never saved to the Incident model.
+
+### Changes
+- [ ] `app/models/incident.py` — add `triage_engine` (String), `triage_tokens_in` (Integer), `triage_tokens_out` (Integer) columns
+- [ ] `app/routes/incidents.py` — persist these fields after triage: `incident.triage_engine = triage_result.engine`
+
+---
+
+## Phase 24: Enrich Detail Page (Pending)
+
+**Goal**: Show the full triage output on the detail page — pipeline progress, engine badge, expandable dispatch, component, token usage.
+
+### What to add
+
+| Element | Where | Data source |
+|---------|-------|-------------|
+| **Pipeline progress bar** | Top of detail, below topbar | Incident.status (5 stages: submitted → guardrail → triage → dispatch → resolved) |
+| **Engine badge** | Topbar, next to status | `incident.triage_engine` |
+| **Affected component** | Description panel, below text | `incident.affected_component` |
+| **Token usage** | KPI strip (6th slot) or chip | `incident.triage_tokens_in/out` |
+| **Confidence interpretation** | Below KPI confidence | Thresholds: ≥0.8 High (green), ≥0.5 Medium (yellow), <0.5 Low (red) |
+| **Expandable ticket** | Dispatch section | `<details>` with `incident.ticket.title` + `incident.ticket.body` |
+| **Expandable email** | Dispatch section | `<details>` with `notification.subject` + `notification.body` (type=email) |
+| **Expandable chat** | Dispatch section | `<details>` with `notification.body` (type=chat) |
+
+### Files
+- [ ] `templates/incidents/dashboard_detail.html` — add pipeline bar, engine badge, expandable dispatch, component, tokens
+- [ ] `static/dashboard.css` — pipeline progress dots, expandable cards, engine badge styles
+
+---
+
+## Phase 25: Explanation Layers (Pending)
+
+**Goal**: Show 3 views of the same diagnosis adapted by audience.
+
+### Three layers
+| Layer | Audience | Content |
+|-------|----------|---------|
+| **General** | Any dev in company | What broke, impact, timeline (~200 tokens) |
+| **Specialist** | Dev in assigned team | Files, state machines, SQL queries, actions (~800 tokens) |
+| **Non-technical** | Reporter/business | Plain English status + next steps (~100 tokens) |
+
+### Implementation
+- [ ] `app/pipeline/explain.py` — `build_explanations(triage, incident)` generates 3 layers from existing fields (no extra LLM call)
+- [ ] `templates/incidents/dashboard_detail.html` — tabbed or accordion view for explanation layers
+- [ ] Wire into triage endpoint: call `build_explanations()` post-triage, store in incident JSON field
+
+---
+
+## Phase 26: Responsive Layout (Pending)
+
+**Goal**: Detail page works on desktop (portrait + landscape) and mobile.
+
+### Breakpoints
+| Breakpoint | Layout |
+|-----------|--------|
+| ≥1024px (desktop landscape) | Current: sidebar 220px + content |
+| 768-1023px (desktop portrait) | Sidebar collapses to 56px icons only, content fills |
+| <768px (mobile) | Sidebar hidden (hamburger toggle), single column, KPI stacks 2×3 |
+
+### Changes
+- [ ] `static/dashboard.css` — media queries for sidebar collapse + mobile single-column
+- [ ] `templates/base_dashboard.html` — hamburger toggle button (hidden on desktop)
+- [ ] `static/dashboard.js` — sidebar toggle handler for mobile
+
+---
+
+## Dependency Graph (Phases 23-26)
+```
+Phase 23 (Store data) ──→ Phase 24 (Enrich detail page)
+                     └──→ Phase 25 (Explanation layers)
+Phase 26 (Responsive) — independent, can run anytime
 ```
 
 ---

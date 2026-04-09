@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,6 +53,11 @@ class Incident(Base, UUIDMixin, TimestampMixin):
     confidence: Mapped[float | None] = mapped_column()
     recommended_actions: Mapped[list | None] = mapped_column(JSON)
     related_files: Mapped[list | None] = mapped_column(JSON)
+
+    # Triage metadata
+    triage_engine: Mapped[str | None] = mapped_column(String(50))
+    triage_tokens_in: Mapped[int | None] = mapped_column(Integer)
+    triage_tokens_out: Mapped[int | None] = mapped_column(Integer)
 
     # Validation
     validation_flags: Mapped[dict | None] = mapped_column(JSON)

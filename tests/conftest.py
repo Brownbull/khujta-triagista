@@ -29,8 +29,9 @@ async def client():
     # Set up empty codebase index (lifespan doesn't run in test transport)
     app.state.codebase_index = CodebaseIndex(repo_path="/tmp/test-repo")
 
-    # Ensure tables exist
+    # Recreate tables (drop + create ensures schema changes are picked up)
     async with _test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     transport = ASGITransport(app=app)
@@ -49,6 +50,7 @@ async def client():
 async def db_session():
     """Provide a clean async DB session for unit tests (no HTTP client needed)."""
     async with _test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     async with _test_session() as session:

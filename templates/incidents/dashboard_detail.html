@@ -16,6 +16,10 @@
 <span class="badge badge-team" data-testid="topbar-team">{{ incident.suggested_assignee|replace('-team','')|capitalize }}</span>
 {% endif %}
 
+{% if incident.triage_engine %}
+<span class="badge badge-engine-{{ incident.triage_engine }}" data-testid="topbar-engine">{{ incident.triage_engine|capitalize }}</span>
+{% endif %}
+
 <!-- View tabs -->
 <div class="view-tabs">
   <a class="view-tab active" href="/incidents/{{ incident.id }}" data-testid="tab-detail">Detail</a>
@@ -37,6 +41,22 @@
 
 {% block content %}
 <div class="view-animate">
+
+  <!-- Pipeline Progress -->
+  {% set stages = ['submitted', 'guardrail', 'triaged', 'dispatched', 'resolved'] %}
+  {% set current_stage = 4 if incident.status.value == 'resolved' else (3 if incident.status.value == 'dispatched' else (2 if incident.severity else (1 if incident.injection_score is not none else 0))) %}
+  <div class="pipeline-progress" data-testid="pipeline-progress">
+    {% for stage in stages %}
+    <div class="pipeline-step {% if loop.index0 <= current_stage %}completed{% endif %} {% if loop.index0 == current_stage %}current{% endif %}">
+      <div class="pipeline-dot"></div>
+      <div class="pipeline-label">{{ stage|capitalize }}</div>
+    </div>
+    {% if not loop.last %}
+    <div class="pipeline-line {% if loop.index0 < current_stage %}completed{% endif %}"></div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
   {% if incident.severity %}
   <!-- KPI Strip -->
   <div class="kpi-strip" data-testid="kpi-strip">
@@ -47,8 +67,9 @@
     </div>
     <div class="kpi">
       <div class="kpi-label">Confidence</div>
-      <div class="kpi-value blue">{{ (incident.confidence * 100)|int if incident.confidence else 0 }}%</div>
-      <div class="kpi-sub">AI certainty</div>
+      {% set conf_pct = (incident.confidence * 100)|int if incident.confidence else 0 %}
+      <div class="kpi-value {% if conf_pct >= 80 %}green{% elif conf_pct >= 50 %}yellow{% else %}red{% endif %}">{{ conf_pct }}%</div>
+      <div class="kpi-sub">{% if conf_pct >= 80 %}High{% elif conf_pct >= 50 %}Medium{% else %}Low{% endif %}</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Category</div>
@@ -66,6 +87,13 @@
       <div class="kpi-value green">{% if age_minutes < 60 %}{{ age_minutes }}m{% elif age_minutes < 1440 %}{{ (age_minutes / 60)|int }}h{% else %}{{ (age_minutes / 1440)|int }}d{% endif %}</div>
       <div class="kpi-sub">Since report</div>
     </div>
+    {% if incident.triage_tokens_in %}
+    <div class="kpi">
+      <div class="kpi-label">Tokens</div>
+      <div class="kpi-value blue" style="font-size:14px">{{ incident.triage_tokens_in + incident.triage_tokens_out }}</div>
+      <div class="kpi-sub">{{ incident.triage_engine|default('?') }}</div>
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 
@@ -75,6 +103,12 @@
       <div class="panel-header">Description</div>
       <div class="panel-body">
         <p class="desc-text">{{ incident.description }}</p>
+        {% if incident.affected_component %}
+        <div style="margin-top: 8px;">
+          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim)">Component:</span>
+          <span style="font-size:12px;color:var(--accent);font-family:var(--mono)">{{ incident.affected_component }}</span>
+        </div>
+        {% endif %}
         {% if incident.injection_score is not none %}
         <div class="guard-row">
           <span class="guard-pill">Injection: {{ (incident.injection_score * 100)|int }}%</span>
@@ -129,23 +163,44 @@
   {% endif %}
 
   {% if incident.ticket or incident.notifications %}
-  <!-- Dispatch -->
+  <!-- Dispatch (expandable cards) -->
   <div class="panel" style="margin-top: 12px;">
     <div class="panel-header">Dispatch <span style="font-size:10px;opacity:0.6">{{ (1 if incident.ticket else 0) + (incident.notifications or [])|length }} actions</span></div>
     <div class="panel-body" style="padding:0">
       {% if incident.ticket %}
-      <div class="dispatch-compact">
-        <span class="dispatch-dot"></span>
-        <span>Ticket created &rarr; {{ incident.suggested_assignee|default('Team')|replace('-team','')|capitalize }}</span>
-        <span class="dispatch-channel">{{ incident.ticket.status.value|capitalize }}</span>
-      </div>
+      <details class="dispatch-expandable" data-testid="dispatch-ticket">
+        <summary class="dispatch-summary">
+          <span class="dispatch-dot"></span>
+          <span class="dispatch-title">Ticket created &rarr; {{ incident.suggested_assignee|default('Team')|replace('-team','')|capitalize }}</span>
+          <span class="dispatch-channel">{{ incident.ticket.status.value|capitalize }}</span>
+        </summary>
+        <div class="dispatch-content">
+          <div class="dispatch-field"><strong>Title:</strong> {{ incident.ticket.title }}</div>
+          <div class="dispatch-field"><strong>Assignee:</strong> {{ incident.ticket.assignee or '—' }}</div>
+          {% if incident.ticket.labels %}
+          <div class="dispatch-field"><strong>Labels:</strong> {{ incident.ticket.labels|tojson }}</div>
+          {% endif %}
+          <div class="dispatch-body">{{ incident.ticket.body }}</div>
+        </div>
+      </details>
       {% endif %}
       {% for notif in incident.notifications or [] %}
-      <div class="dispatch-compact">
-        <span class="dispatch-dot"></span>
-        <span>{{ notif.type.value|capitalize }} {% if notif.sent %}sent{% else %}pending{% endif %}</span>
-        <span class="dispatch-channel">{{ notif.recipient }}</span>
-      </div>
+      <details class="dispatch-expandable" data-testid="dispatch-{{ notif.type.value }}">
+        <summary class="dispatch-summary">
+          <span class="dispatch-dot"></span>
+          <span class="dispatch-title">{{ notif.type.value|capitalize }} {% if notif.sent %}sent{% else %}pending{% endif %}</span>
+          <span class="dispatch-channel">{{ notif.recipient }}</span>
+        </summary>
+        <div class="dispatch-content">
+          {% if notif.subject %}
+          <div class="dispatch-field"><strong>Subject:</strong> {{ notif.subject }}</div>
+          {% endif %}
+          <div class="dispatch-body">{{ notif.body }}</div>
+          {% if notif.sent_at %}
+          <div class="dispatch-field" style="margin-top:6px"><strong>Sent:</strong> {{ notif.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
+          {% endif %}
+        </div>
+      </details>
       {% endfor %}
     </div>
   </div>

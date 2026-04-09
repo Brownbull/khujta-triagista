@@ -60,6 +60,24 @@ class AnthropicProvider:
         for block in response.content:
             if block.type == "tool_use" and block.name == "submit_triage":
                 data = block.input
+
+                # Claude sometimes returns JSON-encoded strings instead of arrays
+                import json
+
+                actions = data["recommended_actions"]
+                if isinstance(actions, str):
+                    try:
+                        actions = json.loads(actions)
+                    except (json.JSONDecodeError, ValueError):
+                        actions = [line.strip().lstrip("- ") for line in actions.strip().splitlines() if line.strip()]
+
+                files = data["related_files"]
+                if isinstance(files, str):
+                    try:
+                        files = json.loads(files)
+                    except (json.JSONDecodeError, ValueError):
+                        files = []
+
                 return TriageResult(
                     severity=data["severity"],
                     category=data["category"],
@@ -68,8 +86,8 @@ class AnthropicProvider:
                     root_cause_hypothesis=data["root_cause_hypothesis"],
                     suggested_assignee=data["suggested_assignee"],
                     confidence=data["confidence"],
-                    recommended_actions=data["recommended_actions"],
-                    related_files=data["related_files"],
+                    recommended_actions=actions,
+                    related_files=files,
                     tokens_in=response.usage.input_tokens,
                     tokens_out=response.usage.output_tokens,
                 )

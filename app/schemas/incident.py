@@ -36,6 +36,9 @@ class IncidentResponse(BaseModel):
     confidence: float | None
     recommended_actions: list | None = None
     related_files: list | None = None
+    triage_engine: str | None = None
+    triage_tokens_in: int | None = None
+    triage_tokens_out: int | None = None
     validation_flags: dict | None = None
     injection_score: float | None = None
     resolved_at: datetime | None
