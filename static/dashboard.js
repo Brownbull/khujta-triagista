@@ -256,9 +256,6 @@
 
     titleEl.textContent = title;
     bodyEl.textContent = body;
-    panel.classList.remove('visible');
-    // Force reflow to restart animation
-    void panel.offsetWidth;
     panel.classList.add('visible');
 
     pipelineInfoTimer = setTimeout(function() {
