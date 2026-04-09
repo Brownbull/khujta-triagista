@@ -249,4 +249,18 @@ async def run_triage(
     # Post-triage: verify related files exist in the codebase
     result.related_files = verify_files(result.related_files, settings.ecommerce_repo_path)
 
+    # Post-triage: sanitize PII from output fields
+    from app.pipeline.guardrail.pii import detect_pii, sanitize_text
+
+    pii = detect_pii(description)
+    if pii.has_pii:
+        logger.info("PII detected in input (%s) — sanitizing output", ", ".join(pii.types))
+        result.technical_summary = sanitize_text(result.technical_summary)
+        result.root_cause_hypothesis = sanitize_text(result.root_cause_hypothesis)
+        result.affected_component = sanitize_text(result.affected_component)
+        result.recommended_actions = [sanitize_text(a) for a in result.recommended_actions]
+        for f in result.related_files:
+            if "relevance" in f:
+                f["relevance"] = sanitize_text(f["relevance"])
+
     return result

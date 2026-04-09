@@ -26,12 +26,12 @@
 | **14. UI Redesign** | Ops dashboard + chat view + settings (based on mockup 13) | MUST | ✅ Done | `phase14` | — |
 | **15. Agent Providers** | Strategy pattern: Anthropic, LangChain, Managed Agents | MUST | ✅ Done | `phase15` | — |
 | **16. Test Updates** | Pytest selectors updated for new UI | MUST | ✅ Done | `phase16` | 80 |
-| **17. Knowledge Base** | Progressive disclosure L0-L3 + KnowledgeLoader | MUST | 🔲 Pending | — | — |
-| **18. TriageResult + VERIFY** | Pydantic BaseModel migration + file verification | MUST | 🔲 Pending | — | — |
-| **19. LangChain Upgrade** | structured_output + fallback chain + knowledge context | MUST | 🔲 Pending | — | — |
-| **20. Anthropic Upgrade** | Knowledge context integration for Premium engine | MUST | 🔲 Pending | — | — |
-| **21. Managed Agents** | Real Anthropic Managed Agents API (REST polling) | SHOULD | 🔲 Pending | — | — |
-| **22. PII Detection** | detect_pii + sanitize_for_output on all outputs | COULD | 🔲 Pending | — | — |
+| **17. Knowledge Base** | Progressive disclosure L0-L3 + KnowledgeLoader | MUST | ✅ Done | `e33f7a3` | — |
+| **18. TriageResult + VERIFY** | Pydantic BaseModel migration + file verification | MUST | ✅ Done | `e33f7a3` | — |
+| **19. LangChain Upgrade** | structured_output + fallback chain + knowledge context | MUST | ✅ Done | `e33f7a3` | — |
+| **20. Anthropic Upgrade** | Knowledge context integration for Premium engine | MUST | ✅ Done | `e33f7a3` | — |
+| **21. Managed Agents** | Real Anthropic Managed Agents API (REST polling) | SHOULD | ✅ Done | `e33f7a3` | — |
+| **22. PII Detection** | detect_pii + sanitize_for_output on all outputs | COULD | ✅ Done | `phase22` | — |
 
 **Test total: 80 pytest + 16 Playwright E2E**
 
@@ -61,8 +61,7 @@ Auto-dispatch (ticket + email + chat) → Acknowledge → Resolve → Reporter n
 - Full documentation: README, AGENTS_USE.md, SCALING.md, QUICKGUIDE.md, LICENSE
 
 ### What's remaining
-- **Phase 17-22**: Three-engine upgrade (El Triagista architecture)
-- **Phase 12**: Demo video recording (last)
+- **Phase 12**: Demo video recording
 
 ---
 
