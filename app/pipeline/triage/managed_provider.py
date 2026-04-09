@@ -91,51 +91,67 @@ class ManagedProvider:
             )
             logger.info("ManagedProvider: incident sent, polling for completion...")
 
-            # 3. Poll until idle (agent clones repo, reads files, submits triage)
+            # 3. Poll events + status until idle or triage captured
+            # Pattern from proven client.py: poll events DURING loop, capture triage immediately
+            seen_events: set[str] = set()
+            triage_data: dict | None = None
             elapsed = 0.0
+            tool_count = 0
+
             while elapsed < MAX_POLL_S:
                 await asyncio.sleep(POLL_INTERVAL_S)
                 elapsed += POLL_INTERVAL_S
 
+                # Check session status
                 status_resp = await client.get(f"{API_BASE}/sessions/{sid}", headers=headers)
-                status_resp.raise_for_status()
-                status = status_resp.json().get("status", "")
+                session_status = status_resp.json().get("status", "unknown")
 
-                if status == "idle":
-                    logger.info("ManagedProvider: agent completed after %.0fs", elapsed)
+                # Fetch and process events (dedup by event ID)
+                events_resp = await client.get(f"{API_BASE}/sessions/{sid}/events", headers=headers)
+                if events_resp.status_code == 200:
+                    for event in events_resp.json().get("data", []):
+                        event_id = event.get("id", "")
+                        if event_id in seen_events:
+                            continue
+                        seen_events.add(event_id)
+
+                        etype = event.get("type", "")
+                        if etype in ("agent.tool_use", "agent.custom_tool_use"):
+                            tool_name = event.get("name", "?")
+                            tool_count += 1
+                            if tool_name == "submit_triage":
+                                triage_data = event.get("input", {})
+                                logger.info("ManagedProvider: captured submit_triage (%.0fs, %d tools)", elapsed, tool_count)
+
+                # Break conditions (same as proven client.py)
+                if session_status == "idle" and len(seen_events) > 1:
+                    logger.info("ManagedProvider: agent idle after %.0fs (%d events, %d tools)", elapsed, len(seen_events), tool_count)
                     break
-                elif status in ("error", "failed", "terminated"):
-                    raise RuntimeError(f"Managed agent session failed: {status}")
+                elif session_status in ("error", "failed", "terminated"):
+                    raise RuntimeError(f"Managed agent session {session_status} after {elapsed:.0f}s")
                 elif int(elapsed) % 30 == 0:
-                    logger.info("ManagedProvider: still running (%.0fs elapsed, status=%s)", elapsed, status)
+                    logger.info("ManagedProvider: running (%.0fs, %d events, status=%s)", elapsed, len(seen_events), session_status)
             else:
-                raise TimeoutError(f"Managed agent timed out after {MAX_POLL_S}s")
+                raise TimeoutError(f"Managed agent timed out after {MAX_POLL_S}s ({len(seen_events)} events captured)")
 
-            # 4. Extract submit_triage from events
-            events_resp = await client.get(f"{API_BASE}/sessions/{sid}/events", headers=headers)
-            events_resp.raise_for_status()
-            events = events_resp.json().get("data", [])
+            # 4. Return captured triage result
+            if triage_data:
+                return TriageResult(
+                    severity=triage_data["severity"],
+                    category=triage_data["category"],
+                    affected_component=triage_data["affected_component"],
+                    technical_summary=triage_data["technical_summary"],
+                    root_cause_hypothesis=triage_data["root_cause_hypothesis"],
+                    suggested_assignee=triage_data["suggested_assignee"],
+                    confidence=triage_data["confidence"],
+                    recommended_actions=triage_data["recommended_actions"],
+                    related_files=triage_data.get("related_files", []),
+                    tokens_in=0,
+                    tokens_out=0,
+                    engine="managed",
+                )
 
-            for event in events:
-                etype = event.get("type", "")
-                if etype in ("agent.custom_tool_use", "agent.tool_use") and event.get("name") == "submit_triage":
-                    data = event.get("input", {})
-                    return TriageResult(
-                        severity=data["severity"],
-                        category=data["category"],
-                        affected_component=data["affected_component"],
-                        technical_summary=data["technical_summary"],
-                        root_cause_hypothesis=data["root_cause_hypothesis"],
-                        suggested_assignee=data["suggested_assignee"],
-                        confidence=data["confidence"],
-                        recommended_actions=data["recommended_actions"],
-                        related_files=data.get("related_files", []),
-                        tokens_in=0,
-                        tokens_out=0,
-                        engine="managed",
-                    )
-
-            raise ValueError("Managed agent did not produce a submit_triage tool_use result")
+            raise ValueError(f"Managed agent finished ({len(seen_events)} events) but no submit_triage found")
 
     def _run_stub(self, description: str) -> TriageResult:
         """Fallback: keyword-based stub when Managed Agent is not configured."""
