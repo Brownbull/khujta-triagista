@@ -348,6 +348,42 @@
   </div>
   {% endif %}
 
+  {% if incident.status.value == 'triaging' %}
+  <!-- Triage in progress — polls for completion -->
+  <div class="panel" style="margin-top: 12px;" data-testid="triaging-panel">
+    <div class="panel-header"><img src="/static/icons/section-actions.png" class="section-icon"> Triage In Progress</div>
+    <div class="panel-body" style="text-align:center; padding: 30px 20px;">
+      <div class="triage-live-spinner"></div>
+      <div style="font-size:14px; font-weight:600; color:var(--text-bright); margin-top:14px;">AI agent is analyzing this incident</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:6px; max-width:400px; margin-left:auto; margin-right:auto; line-height:1.6;">
+        The triage engine is scanning the Solidus codebase, identifying affected components, and generating a root cause hypothesis. This page will update automatically when results are ready.
+      </div>
+      <div class="triage-live-dots" style="margin-top:16px;">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function() {
+    var pollCount = 0;
+    var maxPolls = 60;
+    var interval = setInterval(function() {
+      pollCount++;
+      if (pollCount > maxPolls) { clearInterval(interval); return; }
+      fetch('/api/incidents/{{ incident.id }}')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status !== 'triaging' && d.status !== 'validating') {
+            clearInterval(interval);
+            window.location.reload();
+          }
+        })
+        .catch(function() {});
+    }, 3000);
+  })();
+  </script>
+  {% endif %}
+
   {% if not incident.severity and incident.status.value == 'submitted' %}
   <!-- Pre-triage state with engine selector -->
   <div class="panel" style="margin-top: 12px;" data-testid="pre-triage-panel">
