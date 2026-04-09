@@ -41,7 +41,7 @@
 | **30. Multi-Engine Seed** | Live triage with Premium + Experimental engines → capture → 6 new seed incidents with attachments + Langfuse traces | MUST | ✅ Done | — | 82 |
 | **31. Guardrail Hardening** | SQL/XSS web attack patterns (4 patterns + 5 tests) | SHOULD | 🔲 Pending | — | — |
 | **32. Provider Fallback** | Auto-retry next provider on triage error, ordered fallback chain | SHOULD | 🔲 Pending | — | — |
-| **33. REQUIREMENTS.md** | Enumerated requirements with IDs, phase mapping, status checkboxes | MUST | 🔲 Pending | — | — |
+| **33. REQUIREMENTS.md** | Enumerated requirements with IDs, phase mapping, status checkboxes | MUST | ✅ Done | — | — |
 | **34. VIDEO-SCRIPT-BRIEF.md** | Demo video script with timed segments, ECC differentiators, eval dimensions | MUST | 🔲 Pending | — | — |
 | **35. Onboarding Tooltips** | Step-by-step hints on first visit guiding judges through the demo path | SHOULD | 🔲 Pending | — | — |
 | **36. Doc Refresh** | Update AGENTS_USE.md, QUICKGUIDE.md, README.md for Phases 14-30 | MUST | ✅ Done | — | — |
