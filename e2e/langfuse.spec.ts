@@ -47,7 +47,13 @@ async function loginToLangfuse(page: Page) {
 
   // Navigate to the app — should now be authenticated
   await page.goto(LANGFUSE_URL);
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(2000);
+  // Click into the project if we're on the home page
+  const goBtn = page.locator('a:has-text("Go to project"), button:has-text("Go to project")').first();
+  if (await goBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await goBtn.click();
+    await page.waitForTimeout(2000);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -68,15 +74,9 @@ test("18b — Langfuse traces tab shows seeded pipeline traces", async ({
 }) => {
   await loginToLangfuse(page);
 
-  // Extract project ID from the redirected URL
-  const url = page.url();
-  const projectMatch = url.match(/\/project\/([^/?]+)/);
-  const projectId = projectMatch ? projectMatch[1] : "";
-
-  if (projectId) {
-    await page.goto(`${LANGFUSE_URL}/project/${projectId}/traces`);
-  }
-  await page.waitForTimeout(4000);
+  // Click on "Traces" in the sidebar nav
+  await page.locator('a:has-text("Traces")').first().click({ timeout: 5000 });
+  await page.waitForTimeout(3000);
 
   await snap(page, "traces-list");
   const body = await page.textContent("body");
@@ -91,14 +91,11 @@ test("18c — Langfuse sessions tab has incident-grouped entries", async ({
 }) => {
   await loginToLangfuse(page);
 
+  // Navigate to sessions via URL path (sidebar label may vary by Langfuse version)
   const url = page.url();
-  const projectMatch = url.match(/\/project\/([^/?]+)/);
-  const projectId = projectMatch ? projectMatch[1] : "";
-
-  if (projectId) {
-    await page.goto(`${LANGFUSE_URL}/project/${projectId}/sessions`);
-  }
-  await page.waitForTimeout(4000);
+  const sessionsUrl = url.replace(/\/[^/]*$/, "/sessions").replace(/\/$/, "/sessions");
+  await page.goto(sessionsUrl);
+  await page.waitForTimeout(3000);
 
   await snap(page, "sessions-list");
   const body = await page.textContent("body");

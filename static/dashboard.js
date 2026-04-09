@@ -333,43 +333,74 @@
   var onboardingSteps = [
     {
       title: 'Welcome to Triagista',
-      body: 'AI-powered SRE incident triage agent. This quick tour highlights the key features. Click Next to continue, or Skip to explore on your own.'
+      body: 'AI-powered SRE incident triage. This tour highlights key features for judges. Click Next or Skip tour.',
+      target: '.sidebar-logo'
     },
     {
       title: 'Incident List',
-      body: '18 pre-seeded incidents in all lifecycle states. Sort by any column, filter by Status / Severity / Engine. Notice the attachment icons in the Files column.'
+      body: '18 pre-seeded incidents. Sort by column headers, filter by Status / Severity / Engine above the table.',
+      target: '.incidents-table'
     },
     {
       title: '3 Triage Engines',
-      body: 'Basic (Gemini), Premium (Claude Haiku), and Experimental (Managed Agents). Each incident shows which engine was used. Try submitting a new incident and selecting an engine.'
+      body: 'Basic (Gemini), Premium (Claude), Experimental (Managed Agents). See the Engine column for which was used.',
+      target: '.filter-row'
     },
     {
-      title: 'Pipeline & Guardrails',
-      body: 'Click the colored dots on any incident to see stage details. Check the 2 rejected incidents to see how prompt injection attacks are blocked with threat analysis.'
+      title: 'Attachments',
+      body: 'Log and image icons in the Files column show which incidents have attached files. Click an incident to view them inline.',
+      target: 'th.attach-col'
     },
     {
-      title: 'Langfuse Observability',
-      body: 'Open localhost:3100 (admin@sre-triage.local / admin123). Check Traces, Sessions (grouped by incident), and Users tabs. Errors and rejections are also traced.'
+      title: 'Report & Triage',
+      body: 'Submit a new incident, select an engine, and watch the AI triage in real-time with a progress overlay.',
+      target: '[data-testid="nav-report"]'
     },
     {
-      title: 'Explore!',
-      body: 'Try the Chat tab, toggle dark/light theme, collapse the sidebar, and check explanation layers, attachments, and dispatch cards on any triaged incident.'
+      title: 'Settings & Theme',
+      body: 'Toggle dark/light theme, font size, and font family. Collapse the sidebar with the chevron button.',
+      target: '#settings-btn'
     }
   ];
   var onboardingIdx = 0;
+  var highlightedEl = null;
 
   function showOnboardingStep() {
     var overlay = document.getElementById('onboarding-overlay');
+    var card = document.getElementById('onboarding-card');
     if (!overlay || onboardingIdx >= onboardingSteps.length) {
       dismissOnboarding();
       return;
     }
+
+    // Remove previous highlight
+    if (highlightedEl) highlightedEl.classList.remove('onboarding-highlight');
+
     var step = onboardingSteps[onboardingIdx];
     document.getElementById('onboarding-indicator').textContent = 'Step ' + (onboardingIdx + 1) + ' of ' + onboardingSteps.length;
     document.getElementById('onboarding-title').textContent = step.title;
     document.getElementById('onboarding-body').textContent = step.body;
     document.getElementById('onboarding-next').textContent = onboardingIdx < onboardingSteps.length - 1 ? 'Next' : 'Get Started';
     overlay.classList.add('open');
+
+    // Highlight target element and position card near it
+    var target = step.target ? document.querySelector(step.target) : null;
+    if (target) {
+      target.classList.add('onboarding-highlight');
+      highlightedEl = target;
+      var rect = target.getBoundingClientRect();
+      // Position card below the target, or above if near bottom
+      var top = rect.bottom + 12;
+      var left = Math.max(12, Math.min(rect.left, window.innerWidth - 360));
+      if (top + 200 > window.innerHeight) top = Math.max(12, rect.top - 220);
+      card.style.top = top + 'px';
+      card.style.left = left + 'px';
+    } else {
+      // Fallback: center
+      card.style.top = '50%';
+      card.style.left = '50%';
+      card.style.transform = 'translate(-50%, -50%)';
+    }
   }
 
   window.nextOnboardingStep = function() {
@@ -382,6 +413,7 @@
   };
 
   window.dismissOnboarding = function() {
+    if (highlightedEl) { highlightedEl.classList.remove('onboarding-highlight'); highlightedEl = null; }
     var overlay = document.getElementById('onboarding-overlay');
     if (overlay) overlay.classList.remove('open');
     localStorage.setItem('sre-onboarding-done', '1');
@@ -389,7 +421,7 @@
 
   // Show on first visit to list page
   if (!localStorage.getItem('sre-onboarding-done') && window.location.pathname === '/incidents') {
-    setTimeout(showOnboardingStep, 500);
+    setTimeout(showOnboardingStep, 800);
   }
 
 })();
