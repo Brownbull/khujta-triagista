@@ -335,7 +335,7 @@
             <span class="provider-name">Basic</span>
           </div>
           <div class="provider-model">Gemini 2.5 Flash</div>
-          <div class="provider-desc">LangChain + Google Gemini. Free tier.</div>
+          <div class="provider-desc">LangChain orchestration with Google Gemini. Lowest cost option with generous free tier.</div>
           {% if not has_langchain %}
           <div style="font-size:10px;color:var(--red);margin-top:6px">Requires GOOGLE_API_KEY</div>
           {% endif %}
@@ -348,7 +348,7 @@
             <span class="provider-name">Premium</span>
           </div>
           <div class="provider-model">Claude Haiku 4.5</div>
-          <div class="provider-desc">Anthropic SDK with tool_use.</div>
+          <div class="provider-desc">Anthropic SDK with structured tool_use. Highest accuracy triage via Claude.</div>
           {% if not has_anthropic %}
           <div style="font-size:10px;color:var(--red);margin-top:6px">Requires ANTHROPIC_API_KEY</div>
           {% endif %}
@@ -361,7 +361,7 @@
             <span class="provider-name">Managed Agents</span>
           </div>
           <div class="provider-model">Claude Agent SDK</div>
-          <div class="provider-desc">Autonomous multi-step reasoning.</div>
+          <div class="provider-desc">Anthropic's managed agent framework. Autonomous multi-step reasoning.</div>
           {% if not has_anthropic %}
           <div style="font-size:10px;color:var(--red);margin-top:6px">Requires ANTHROPIC_API_KEY</div>
           {% endif %}
