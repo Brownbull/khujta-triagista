@@ -153,7 +153,7 @@ graph TB
         end
 
         PG[("PostgreSQL<br/>:5433")]
-        RD[("Redis<br/>:6380")]
+        RD[("Redis<br/>:6380<br/>(Rate Limiting)")]
         LF["Langfuse<br/>:3100<br/>(LLM Observability)"]
         SOL["Solidus Repo<br/>(cloned at startup)"]
     end
