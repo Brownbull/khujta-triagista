@@ -44,7 +44,7 @@
 | **33. REQUIREMENTS.md** | Enumerated requirements with IDs, phase mapping, status checkboxes | MUST | 🔲 Pending | — | — |
 | **34. VIDEO-SCRIPT-BRIEF.md** | Demo video script with timed segments, ECC differentiators, eval dimensions | MUST | 🔲 Pending | — | — |
 | **35. Onboarding Tooltips** | Step-by-step hints on first visit guiding judges through the demo path | SHOULD | 🔲 Pending | — | — |
-| **36. Doc Refresh** | Update AGENTS_USE.md, QUICKGUIDE.md, README.md for Phases 14-29 (LLM-judge critical) | MUST | 🔲 Pending | — | — |
+| **36. Doc Refresh** | Update AGENTS_USE.md, QUICKGUIDE.md, README.md for Phases 14-30 | MUST | ✅ Done | — | — |
 | **37. Langfuse E2E** | Playwright tests: login to Langfuse, screenshot traces before/after triage | SHOULD | 🔲 Pending | — | — |
 | **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 

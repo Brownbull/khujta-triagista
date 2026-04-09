@@ -32,7 +32,7 @@ docker compose up --build -d
 open http://localhost:8100
 ```
 
-The app seeds itself with 4 sample incidents on first startup.
+The app seeds itself with **18 sample incidents** on first startup covering all lifecycle states, all 3 triage engines, and multiple attachment types.
 
 ## Engine Setup
 
@@ -71,7 +71,7 @@ See `docs/managed-agent-setup.md` for the agent YAML configuration. Without thes
 
 ### Which engines are available?
 
-The submit form auto-detects which engines are configured and disables unavailable options. At minimum, set `ANTHROPIC_API_KEY` for the Premium engine.
+The submit form and detail page auto-detect which engines are configured and disable unavailable options. At minimum, set `ANTHROPIC_API_KEY` for the Premium engine.
 
 ## Access Credentials
 
@@ -87,44 +87,68 @@ The submit form auto-detects which engines are configured and disables unavailab
 
 ## Demo Flow (3 minutes)
 
-1. **View seeded incidents** at `/incidents` — 2 triaged (P1, P2) + 2 untriaged
-2. **Submit a new incident** via `/incidents/new` — describe an e-commerce issue
-3. **Run AI Triage** — click the button on the detail page, watch Claude analyze it (~15s)
-4. **See results** — severity, root cause, affected Solidus files, recommended actions
-5. **Check dispatch** — expand ticket, email, and chat cards to see generated content
-6. **Resolve the incident** — Acknowledge, then Resolve with type and notes
-7. **Test guardrails** — submit a prompt injection, see it blocked (400 error)
-8. **View Langfuse** — open http://localhost:3100 to see LLM traces with token usage
+1. **View seeded incidents** at `/incidents` — 18 pre-loaded incidents with sorting, filtering, and pagination
+2. **Browse the list** — filter by Status, Severity, or Engine; sort by any column; see attachment icons
+3. **Click a triaged incident** — see full triage results with pipeline progress, KPIs, engine info strip, explanation layers
+4. **Click pipeline dots** — info panel shows what happened at each stage
+5. **Submit a new incident** via `/incidents/new` — select a triage engine, submit, watch the progress overlay
+6. **See results** — severity, root cause, affected Solidus files, recommended actions, dispatch cards
+7. **Check the Chat view** — click the Chat tab to see the conversation timeline
+8. **Resolve the incident** — Acknowledge, then Resolve with type and notes
+9. **Test guardrails** — submit a prompt injection, see it blocked with guardrail rejection details
+10. **View Langfuse** — open http://localhost:3100, check Traces, Sessions, and Users tabs
+11. **Toggle settings** — switch dark/light theme, font size, font family; collapse sidebar
 
 ## Architecture
 
 ```
-User → FastAPI + HTMX Dashboard
-         ↓
+User -> FastAPI + HTMX Dashboard
+         |
     Guardrail (injection detection, PII scan, rate limiting)
-         ↓
-    Engine Router ─── Basic (LangChain + Gemini/Groq)
-         │          ├── Premium (Anthropic SDK + Claude Haiku)
-         │          └── Experimental (Managed Agents — autonomous)
-         ↓
-    Knowledge Base (L0 architecture → L1 components → L2 domain deep-dive)
-         ↓
+         |
+    Engine Router --- Basic (LangChain + Gemini/Groq)
+         |          |-- Premium (Anthropic SDK + Claude Haiku)
+         |          \-- Experimental (Managed Agents -- autonomous)
+         |
+    Knowledge Base (L0 architecture -> L1 components -> L2 domain deep-dive)
+         |
     VERIFY (check related files exist in codebase)
-         ↓
+         |
     PII Sanitization (strip PII from outputs)
-         ↓
+         |
     Dispatch (ticket + email + chat notifications)
-         ↓
+         |
     Observability (OpenTelemetry spans + Langfuse LLM traces)
+         |
+    Resolution (acknowledge -> resolve -> notify reporter)
 ```
+
+## Key Features
+
+- **Ops Dashboard** — modern dark/light UI with sidebar, pipeline progress, KPIs, explanation layers
+- **3 Triage Engines** — Basic (Gemini), Premium (Claude), Experimental (Managed Agents)
+- **Triage Progress Overlay** — animated pipeline steps while AI analyzes
+- **Auto-Triage on Submit** — form submission chains directly into triage with selected engine
+- **Pipeline Info Panel** — click dots to see stage details (guardrail score, triage engine, dispatch info)
+- **Triage Engine Strip** — shows model, framework, and token usage per incident
+- **Attachments** — upload log files + screenshots; inline viewer with image preview and log rendering
+- **Attachment Indicators** — list view shows log/image icons per incident
+- **Sortable/Filterable List** — sort by any column, filter by status/severity/engine, paginated (20/page)
+- **Chat Timeline** — conversation-style view of triage messages with coming-soon interactive input
+- **Explanation Layers** — General / Specialist / Non-technical views of the diagnosis
+- **Guardrail Rejection Panel** — blocked submissions show injection flags and threat analysis
+- **Collapsible Sidebar** — toggle between full and icon-only sidebar
+- **Settings** — theme (dark/light), font size (S/M/L), font family (8 options)
+- **Langfuse Integration** — traces, sessions, users tabs populated; errors and rejections traced
+- **18 Seed Incidents** — all lifecycle states, all 3 engines, varied attachments
 
 ## Stack
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy (async), PostgreSQL
 - **Frontend**: HTMX, Jinja2, CSS (Ops dashboard with dark/light themes)
-- **AI**: Anthropic Claude Haiku 4.5, Google Gemini 2.0 Flash, Groq Llama 3.3, Claude Agent SDK
+- **AI**: Anthropic Claude Haiku 4.5, Google Gemini 2.5 Flash, Groq Llama 3.3, Claude Agent SDK
 - **Knowledge**: Progressive disclosure (L0-L3) codebase knowledge base
-- **Observability**: OpenTelemetry, Langfuse
+- **Observability**: OpenTelemetry, Langfuse (traces, sessions, users)
 - **Infrastructure**: Docker Compose, Redis
 
 ## Port Map
@@ -139,10 +163,10 @@ User → FastAPI + HTMX Dashboard
 ## Testing
 
 ```bash
-# Unit + integration tests (80 tests, inside Docker)
+# Unit + integration tests (82 tests, inside Docker)
 docker compose exec app pytest tests/ -v
 
-# E2E tests with screenshots (16 tests, from host, requires Playwright)
+# E2E tests with screenshots (21 tests, from host, requires Playwright)
 npx playwright test
 
 # Lint
@@ -153,20 +177,22 @@ docker compose exec app ruff check app/ tests/
 
 ```
 app/
-├── config.py                 # Settings (env vars)
-├── main.py                   # FastAPI app + lifespan
-├── database.py               # Async SQLAlchemy
-├── models/                   # ORM models (incident, ticket, notification)
-├── schemas/                  # Pydantic DTOs
-├── routes/                   # API + HTML page routes
-├── pipeline/
-│   ├── guardrail/            # Injection detection, PII scan, rate limiting
-│   ├── knowledge/            # Progressive disclosure L0-L3 codebase knowledge
-│   ├── triage/               # 3-engine triage (Anthropic, LangChain, Managed)
-│   └── dispatch/             # Ticket + notification creation
-└── services/
-    ├── codebase_indexer.py   # Solidus repo keyword index
-    ├── observability.py      # OpenTelemetry + Langfuse setup
-    ├── seed_data.py          # Sample incidents for dev
-    └── seed_langfuse.py      # Auto-create Langfuse account/keys
++-- config.py                 # Settings (env vars)
++-- main.py                   # FastAPI app + lifespan
++-- database.py               # Async SQLAlchemy
++-- models/                   # ORM models (incident, ticket, notification)
++-- schemas/                  # Pydantic DTOs
++-- routes/                   # API + HTML page routes
++-- pipeline/
+|   +-- guardrail/            # Injection detection, PII scan, rate limiting
+|   +-- knowledge/            # Progressive disclosure L0-L3 codebase knowledge
+|   +-- triage/               # 3-engine triage (Anthropic, LangChain, Managed)
+|   +-- explain.py            # Explanation layers (general/specialist/non-tech)
+|   \-- dispatch/             # Ticket + notification creation
+\-- services/
+    +-- codebase_indexer.py   # Solidus repo keyword index
+    +-- observability.py      # OpenTelemetry + Langfuse setup
+    +-- seed_data.py          # 18 sample incidents for dev
+    +-- seed_attachments/     # Mock log files + screenshots
+    \-- seed_langfuse.py      # Auto-create Langfuse account/keys
 ```
