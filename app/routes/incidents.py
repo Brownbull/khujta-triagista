@@ -272,26 +272,66 @@ async def triage_incident(
         ],
     }
 
-    # --- Pipeline stage 3: Triage (LLM call) ---
+    # --- Pipeline stage 3: Triage (LLM call) with provider fallback ---
     import time as _time
 
-    try:
-        t0 = _time.monotonic()
-        with pipeline_span("triage", {"incident_id": str(incident_id)}):
-            triage_result = await run_triage(
-                description=incident.description,
-                codebase_index=codebase_index,
-                attachment_descriptions=attachment_descriptions or None,
-                provider_override=triage_provider,
-                knowledge_loader=knowledge_loader,
+    # Fallback chain: try requested provider first, then alternatives
+    _fallback_order = {
+        "anthropic": ["anthropic", "langchain"],
+        "langchain": ["langchain", "anthropic"],
+        "managed": ["managed", "anthropic", "langchain"],
+    }
+    providers_to_try = _fallback_order.get(triage_provider, [triage_provider])
+
+    # Filter to providers that have API keys configured
+    def _provider_available(p: str) -> bool:
+        if p == "anthropic":
+            return bool(settings.anthropic_api_key)
+        if p == "langchain":
+            return bool(settings.google_api_key or settings.groq_api_key)
+        if p == "managed":
+            return bool(settings.anthropic_api_key)
+        return False
+
+    providers_to_try = [p for p in providers_to_try if _provider_available(p)]
+    if not providers_to_try:
+        raise HTTPException(status_code=503, detail="No triage providers configured")
+
+    triage_result = None
+    triage_ms = 0.0
+    last_error: Exception | None = None
+
+    for attempt_provider in providers_to_try:
+        try:
+            t0 = _time.monotonic()
+            with pipeline_span("triage", {"incident_id": str(incident_id), "provider": attempt_provider}):
+                triage_result = await run_triage(
+                    description=incident.description,
+                    codebase_index=codebase_index,
+                    attachment_descriptions=attachment_descriptions or None,
+                    provider_override=attempt_provider,
+                    knowledge_loader=knowledge_loader,
+                )
+            triage_ms = (_time.monotonic() - t0) * 1000
+            if attempt_provider != triage_provider:
+                logger.info(
+                    "Triage fallback: %s -> %s succeeded for %s",
+                    triage_provider, attempt_provider, incident_id,
+                )
+            break  # success
+        except Exception as exc:
+            last_error = exc
+            logger.warning(
+                "Triage with %s failed for %s: %s — trying next provider",
+                attempt_provider, incident_id, str(exc)[:200],
             )
-        triage_ms = (_time.monotonic() - t0) * 1000
-    except Exception as exc:
-        logger.exception("Triage failed for incident %s", incident_id)
+            continue
+
+    if triage_result is None:
+        logger.exception("All triage providers failed for %s", incident_id)
         incident.status = IncidentStatus.SUBMITTED  # revert status
         await db.commit()
-        # Surface the upstream error reason for the user
-        reason = str(exc)
+        reason = str(last_error) if last_error else "Unknown error"
         if "503" in reason or "UNAVAILABLE" in reason or "high demand" in reason:
             detail = "AI provider temporarily unavailable (high demand). Please try again or switch engines."
         elif "401" in reason or "API key" in reason.lower():

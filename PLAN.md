@@ -39,16 +39,16 @@
 | **28. Realistic Seed Data** | 12 incidents: mixed lifecycles, attachments, guardrail rejections + engine selector on detail page | MUST | ✅ Done | — | 80 |
 | **29. Langfuse Observability** | Trace failures + rejections, session_id/user_id, populate Sessions/Users tabs | SHOULD | ✅ Done | — | 82 |
 | **30. Multi-Engine Seed** | Live triage with Premium + Experimental engines → capture → 6 new seed incidents with attachments + Langfuse traces | MUST | ✅ Done | — | 82 |
-| **31. Guardrail Hardening** | SQL/XSS web attack patterns (4 patterns + 5 tests) | SHOULD | 🔲 Pending | — | — |
-| **32. Provider Fallback** | Auto-retry next provider on triage error, ordered fallback chain | SHOULD | 🔲 Pending | — | — |
+| **31. Guardrail Hardening** | SQL/XSS web attack patterns (9 new patterns + 5 tests) | SHOULD | ✅ Done | — | 87 |
+| **32. Provider Fallback** | Auto-retry next provider on triage error, ordered fallback chain | SHOULD | ✅ Done | — | 87 |
 | **33. REQUIREMENTS.md** | Enumerated requirements with IDs, phase mapping, status checkboxes | MUST | ✅ Done | — | — |
 | **34. VIDEO-SCRIPT-BRIEF.md** | Demo video script with timed segments, ECC differentiators, eval dimensions | MUST | 🔲 Pending | — | — |
-| **35. Onboarding Tooltips** | Step-by-step hints on first visit guiding judges through the demo path | SHOULD | 🔲 Pending | — | — |
+| **35. Onboarding Tooltips** | 6-step first-visit walkthrough overlay (localStorage gated) | SHOULD | ✅ Done | — | — |
 | **36. Doc Refresh** | Update AGENTS_USE.md, QUICKGUIDE.md, README.md for Phases 14-30 | MUST | ✅ Done | — | — |
-| **37. Langfuse E2E** | Playwright tests: login to Langfuse, screenshot traces before/after triage | SHOULD | 🔲 Pending | — | — |
+| **37. Langfuse E2E** | 4 Playwright tests: API login, traces tab, sessions tab, observability endpoint | SHOULD | ✅ Done | — | — |
 | **12. Demo Video** | 3-min YouTube walkthrough | MUST | 🔲 Pending | — | — |
 
-**Test total: 80 pytest + 16 Playwright E2E**
+**Test total: 87 pytest + 30 Playwright E2E**
 
 ---
 

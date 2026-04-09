@@ -835,6 +835,37 @@ html.light .dispatch-body { background: rgba(0,0,0,0.04); }
 .sidebar.collapsed .incident-mini { display: none; }
 .sidebar.collapsed .sidebar-footer { display: none; }
 
+/* ======================== ONBOARDING WALKTHROUGH ======================== */
+.onboarding-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+  align-items: center; justify-content: center;
+}
+.onboarding-overlay.open { display: flex; }
+.onboarding-card {
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 12px;
+  padding: 24px 28px; width: 420px; max-width: 90vw;
+  box-shadow: 0 16px 48px rgba(59,130,246,0.15);
+  animation: tooltipIn 0.3s var(--spring);
+}
+.onboarding-step-indicator {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); margin-bottom: 8px;
+}
+.onboarding-title {
+  font-size: 16px; font-weight: 700; color: var(--text-bright); margin-bottom: 8px;
+}
+.onboarding-body {
+  font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 16px;
+}
+.onboarding-actions { display: flex; justify-content: space-between; align-items: center; }
+.onboarding-skip {
+  background: none; border: none; color: var(--text-dim); font-size: 12px;
+  cursor: pointer; padding: 4px 8px;
+}
+.onboarding-skip:hover { color: var(--text); }
+.onboarding-next { font-size: 12px; padding: 6px 16px; }
+
 /* ======================== RESPONSIVE LAYOUT ======================== */
 
 /* Hamburger toggle (hidden on desktop) */

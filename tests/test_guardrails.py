@@ -56,6 +56,46 @@ def test_injection_multiple_medium_patterns_boost():
     assert "injection_patterns_detected" in result.flags
 
 
+def test_sql_injection_drop_table():
+    result = validate_input(
+        "Error on page: '; DROP TABLE orders; -- UNION SELECT * FROM users"
+    )
+    assert result.rejected is True
+    assert result.injection_score >= 0.90
+
+
+def test_sql_injection_union_select():
+    result = validate_input(
+        "UNION SELECT username, password FROM admin_users WHERE '1'='1'"
+    )
+    assert result.injection_score >= 0.85
+    assert "injection_patterns_detected" in result.flags
+
+
+def test_xss_script_tag():
+    result = validate_input(
+        'Error message: <script>alert(document.cookie)</script>'
+    )
+    assert result.rejected is True
+    assert result.injection_score >= 0.90
+
+
+def test_template_injection():
+    result = validate_input(
+        "Tried {{constructor.constructor('return process.env')()}} in the field"
+    )
+    assert result.rejected is True
+    assert result.injection_score >= 0.90
+
+
+def test_xss_event_handler():
+    result = validate_input(
+        'Image broke: <img src=x onerror=alert(1)>'
+    )
+    assert result.injection_score >= 0.85
+    assert "injection_patterns_detected" in result.flags
+
+
 def test_mild_injection_not_rejected():
     """Low-severity patterns flag but don't reject."""
     result = validate_input(

@@ -149,6 +149,19 @@
   </div>
 </div>
 
+<!-- Onboarding walkthrough (first visit only) -->
+<div class="onboarding-overlay" id="onboarding-overlay">
+  <div class="onboarding-card" id="onboarding-card">
+    <div class="onboarding-step-indicator" id="onboarding-indicator"></div>
+    <div class="onboarding-title" id="onboarding-title"></div>
+    <div class="onboarding-body" id="onboarding-body"></div>
+    <div class="onboarding-actions">
+      <button class="onboarding-skip" onclick="dismissOnboarding()">Skip tour</button>
+      <button class="onboarding-next btn-top btn-top-primary" id="onboarding-next" onclick="nextOnboardingStep()">Next</button>
+    </div>
+  </div>
+</div>
+
 <script src="/static/dashboard.js"></script>
 {% block scripts %}{% endblock %}
 </body>

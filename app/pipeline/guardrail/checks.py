@@ -31,6 +31,17 @@ INJECTION_PATTERNS: list[tuple[str, float]] = [
     (r"respond\s+only\s+with", 0.70),
     (r"output\s+(only|just)\s+(the|a)", 0.60),
     (r"do\s+not\s+(mention|include|add)\s+(any|the)", 0.50),
+    # SQL injection patterns (matched against lowercased text)
+    (r";\s*(drop|delete|update|insert|alter|truncate)\s+", 0.95),
+    (r"union\s+select\s+", 0.90),
+    (r"'\s*(or|and)\s+'?\d*'?\s*=\s*'?\d*", 0.85),
+    (r"--\s*$", 0.40),  # SQL comment at end (low weight — common in text)
+    # XSS / template injection
+    (r"<script[\s>]", 0.90),
+    (r"javascript\s*:", 0.85),
+    (r"on(error|load|click|mouseover)\s*=", 0.85),
+    (r"\{\{.*constructor", 0.90),
+    (r"\$\{.*runtime|process|exec", 0.90),
 ]
 
 # --- PII patterns ---

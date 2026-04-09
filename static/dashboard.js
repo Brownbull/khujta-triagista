@@ -329,4 +329,67 @@
     if (btn) btn.classList.add('active');
   };
 
+  // ==================== ONBOARDING WALKTHROUGH ====================
+  var onboardingSteps = [
+    {
+      title: 'Welcome to Triagista',
+      body: 'AI-powered SRE incident triage agent. This quick tour highlights the key features. Click Next to continue, or Skip to explore on your own.'
+    },
+    {
+      title: 'Incident List',
+      body: '18 pre-seeded incidents in all lifecycle states. Sort by any column, filter by Status / Severity / Engine. Notice the attachment icons in the Files column.'
+    },
+    {
+      title: '3 Triage Engines',
+      body: 'Basic (Gemini), Premium (Claude Haiku), and Experimental (Managed Agents). Each incident shows which engine was used. Try submitting a new incident and selecting an engine.'
+    },
+    {
+      title: 'Pipeline & Guardrails',
+      body: 'Click the colored dots on any incident to see stage details. Check the 2 rejected incidents to see how prompt injection attacks are blocked with threat analysis.'
+    },
+    {
+      title: 'Langfuse Observability',
+      body: 'Open localhost:3100 (admin@sre-triage.local / admin123). Check Traces, Sessions (grouped by incident), and Users tabs. Errors and rejections are also traced.'
+    },
+    {
+      title: 'Explore!',
+      body: 'Try the Chat tab, toggle dark/light theme, collapse the sidebar, and check explanation layers, attachments, and dispatch cards on any triaged incident.'
+    }
+  ];
+  var onboardingIdx = 0;
+
+  function showOnboardingStep() {
+    var overlay = document.getElementById('onboarding-overlay');
+    if (!overlay || onboardingIdx >= onboardingSteps.length) {
+      dismissOnboarding();
+      return;
+    }
+    var step = onboardingSteps[onboardingIdx];
+    document.getElementById('onboarding-indicator').textContent = 'Step ' + (onboardingIdx + 1) + ' of ' + onboardingSteps.length;
+    document.getElementById('onboarding-title').textContent = step.title;
+    document.getElementById('onboarding-body').textContent = step.body;
+    document.getElementById('onboarding-next').textContent = onboardingIdx < onboardingSteps.length - 1 ? 'Next' : 'Get Started';
+    overlay.classList.add('open');
+  }
+
+  window.nextOnboardingStep = function() {
+    onboardingIdx++;
+    if (onboardingIdx >= onboardingSteps.length) {
+      dismissOnboarding();
+    } else {
+      showOnboardingStep();
+    }
+  };
+
+  window.dismissOnboarding = function() {
+    var overlay = document.getElementById('onboarding-overlay');
+    if (overlay) overlay.classList.remove('open');
+    localStorage.setItem('sre-onboarding-done', '1');
+  };
+
+  // Show on first visit to list page
+  if (!localStorage.getItem('sre-onboarding-done') && window.location.pathname === '/incidents') {
+    setTimeout(showOnboardingStep, 500);
+  }
+
 })();
