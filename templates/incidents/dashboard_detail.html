@@ -105,14 +105,42 @@
       <div class="kpi-value green">{% if age_minutes < 60 %}{{ age_minutes }}m{% elif age_minutes < 1440 %}{{ (age_minutes / 60)|int }}h{% else %}{{ (age_minutes / 1440)|int }}d{% endif %}</div>
       <div class="kpi-sub">Since report</div>
     </div>
-    {% if incident.triage_tokens_in %}
-    <div class="kpi">
-      <div class="kpi-label">Tokens</div>
-      <div class="kpi-value blue" style="font-size:14px">{{ incident.triage_tokens_in + incident.triage_tokens_out }}</div>
-      <div class="kpi-sub">{{ incident.triage_engine|default('?') }}</div>
-    </div>
-    {% endif %}
   </div>
+
+  {% if incident.triage_engine %}
+  <!-- Triage Engine Info -->
+  {% set engine_meta = {
+    'basic': {'label': 'Basic', 'model': 'Gemini 2.5 Flash', 'framework': 'LangChain', 'tag_class': 'tag-free'},
+    'langchain': {'label': 'Basic', 'model': 'Gemini 2.5 Flash', 'framework': 'LangChain', 'tag_class': 'tag-free'},
+    'anthropic': {'label': 'Premium', 'model': 'Claude Haiku 4.5', 'framework': 'Anthropic SDK', 'tag_class': 'tag-premium'},
+    'managed': {'label': 'Experimental', 'model': 'Claude Agent SDK', 'framework': 'Managed Agents', 'tag_class': 'tag-hot'}
+  } %}
+  {% set eng = engine_meta.get(incident.triage_engine, {'label': incident.triage_engine|capitalize, 'model': '—', 'framework': '—', 'tag_class': ''}) %}
+  <div class="triage-engine-strip" data-testid="triage-engine-strip">
+    <div class="engine-badge-col">
+      <span class="provider-tag {{ eng.tag_class }}">{{ eng.label }}</span>
+      <span class="engine-model">{{ eng.model }}</span>
+    </div>
+    <div class="engine-stats">
+      <div class="engine-stat">
+        <span class="engine-stat-label">Framework</span>
+        <span class="engine-stat-value">{{ eng.framework }}</span>
+      </div>
+      <div class="engine-stat">
+        <span class="engine-stat-label">Tokens In</span>
+        <span class="engine-stat-value">{{ incident.triage_tokens_in|default('—') }}</span>
+      </div>
+      <div class="engine-stat">
+        <span class="engine-stat-label">Tokens Out</span>
+        <span class="engine-stat-value">{{ incident.triage_tokens_out|default('—') }}</span>
+      </div>
+      <div class="engine-stat">
+        <span class="engine-stat-label">Total</span>
+        <span class="engine-stat-value" style="color:var(--accent);font-weight:600">{{ (incident.triage_tokens_in or 0) + (incident.triage_tokens_out or 0) }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
   {% endif %}
 
   <!-- Description + Root Cause -->
