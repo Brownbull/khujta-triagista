@@ -648,40 +648,26 @@ html.light .triage-progress-card { box-shadow: 0 16px 48px rgba(0,0,0,0.15); }
 .pipeline-line.completed { background: var(--green); }
 .pipeline-step.rejected .pipeline-dot { border-color: var(--red); background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
 .pipeline-step.rejected .pipeline-label { color: var(--red); }
-.pipeline-dot { cursor: pointer; position: relative; }
+.pipeline-dot { cursor: pointer; }
 
-/* Pipeline tooltip */
-.pipeline-tooltip {
-  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 14px; min-width: 200px; max-width: 280px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 100;
-  animation: tooltipBelow 0.2s var(--spring);
-  pointer-events: auto;
+/* Pipeline info panel (centered below pipeline) */
+.pipeline-info-panel {
+  display: none; text-align: center; margin-top: 8px;
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--border);
+  animation: infoFadeIn 0.2s ease;
 }
-.pipeline-tooltip::after {
-  content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-  border: 6px solid transparent; border-bottom-color: var(--border);
-}
-.pipeline-tooltip-title {
+.pipeline-info-panel.visible { display: block; }
+.pipeline-info-title {
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  color: var(--accent); margin-bottom: 4px;
+  color: var(--accent); margin-bottom: 2px;
 }
-.pipeline-tooltip-body {
+.pipeline-info-body {
   font-size: 12px; color: var(--text-dim); line-height: 1.5;
 }
-.pipeline-tooltip-close {
-  position: absolute; top: 4px; right: 8px; background: none; border: none;
-  color: var(--text-dim); font-size: 14px; cursor: pointer; padding: 2px 4px;
-}
-.pipeline-tooltip-close:hover { color: var(--text-bright); }
-@keyframes tooltipIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-@keyframes tooltipBelow {
-  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+@keyframes infoFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ======================== ATTACHMENTS ======================== */

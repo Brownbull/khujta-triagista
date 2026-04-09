@@ -62,13 +62,17 @@
   <div class="pipeline-progress" data-testid="pipeline-progress">
     {% for stage in stages %}
     <div class="pipeline-step {% if loop.index0 <= current_stage %}completed{% endif %} {% if loop.index0 == current_stage %}current{% endif %} {% if is_rejected and loop.index0 == 1 %}rejected{% endif %}">
-      <div class="pipeline-dot" onclick="showPipelineTooltip(this)" data-tooltip-title="{{ stage|capitalize }}" data-tooltip-body="{{ stage_descs[stage] }}"></div>
+      <div class="pipeline-dot" onclick="showPipelineInfo('{{ stage|capitalize }}', '{{ stage_descs[stage] }}')" data-tooltip-title="{{ stage|capitalize }}" data-tooltip-body="{{ stage_descs[stage] }}"></div>
       <div class="pipeline-label">{{ stage|capitalize }}</div>
     </div>
     {% if not loop.last %}
     <div class="pipeline-line {% if loop.index0 < current_stage %}completed{% endif %}"></div>
     {% endif %}
     {% endfor %}
+  </div>
+  <div class="pipeline-info-panel" id="pipeline-info-panel">
+    <div class="pipeline-info-title" id="pipeline-info-title"></div>
+    <div class="pipeline-info-body" id="pipeline-info-body"></div>
   </div>
 
   {% if incident.severity %}

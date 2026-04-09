@@ -243,45 +243,36 @@
     if (e.key === 'Escape') window.closeResolveDialog();
   });
 
-  // ==================== PIPELINE TOOLTIPS ====================
-  var tooltipTimer = null;
+  // ==================== PIPELINE INFO PANEL ====================
+  var pipelineInfoTimer = null;
 
-  window.showPipelineTooltip = function(dotEl) {
-    // Remove any existing tooltip
-    dismissPipelineTooltip();
+  window.showPipelineInfo = function(title, body) {
+    var panel = document.getElementById('pipeline-info-panel');
+    var titleEl = document.getElementById('pipeline-info-title');
+    var bodyEl = document.getElementById('pipeline-info-body');
+    if (!panel || !title) return;
 
-    var title = dotEl.getAttribute('data-tooltip-title') || '';
-    var body = dotEl.getAttribute('data-tooltip-body') || '';
-    if (!body) return;
+    if (pipelineInfoTimer) { clearTimeout(pipelineInfoTimer); pipelineInfoTimer = null; }
 
-    var tooltip = document.createElement('div');
-    tooltip.className = 'pipeline-tooltip';
-    tooltip.innerHTML =
-      '<button class="pipeline-tooltip-close" onclick="dismissPipelineTooltip()">&times;</button>' +
-      '<div class="pipeline-tooltip-title">' + title + '</div>' +
-      '<div class="pipeline-tooltip-body">' + body + '</div>';
+    titleEl.textContent = title;
+    bodyEl.textContent = body;
+    panel.classList.remove('visible');
+    // Force reflow to restart animation
+    void panel.offsetWidth;
+    panel.classList.add('visible');
 
-    // Position relative to the dot's parent step
-    var step = dotEl.closest('.pipeline-step');
-    if (step) {
-      step.style.position = 'relative';
-      step.appendChild(tooltip);
-    }
-
-    // Auto-dismiss after 5 seconds
-    tooltipTimer = setTimeout(dismissPipelineTooltip, 5000);
+    pipelineInfoTimer = setTimeout(function() {
+      panel.classList.remove('visible');
+      pipelineInfoTimer = null;
+    }, 5000);
   };
 
-  window.dismissPipelineTooltip = function() {
-    if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
-    var existing = document.querySelector('.pipeline-tooltip');
-    if (existing) existing.remove();
-  };
-
-  // Dismiss on click outside
+  // Dismiss on click outside pipeline area
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.pipeline-step') && !e.target.closest('.pipeline-tooltip')) {
-      dismissPipelineTooltip();
+    if (!e.target.closest('.pipeline-progress') && !e.target.closest('.pipeline-info-panel')) {
+      var panel = document.getElementById('pipeline-info-panel');
+      if (panel) panel.classList.remove('visible');
+      if (pipelineInfoTimer) { clearTimeout(pipelineInfoTimer); pipelineInfoTimer = null; }
     }
   });
 
