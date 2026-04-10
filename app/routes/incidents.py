@@ -113,6 +113,11 @@ async def create_incident(
                 continue
 
             content_type = upload_file.content_type or "application/octet-stream"
+            # Browsers send .log/.txt/.csv as application/octet-stream — remap by extension
+            if content_type == "application/octet-stream" and upload_file.filename:
+                ext = Path(upload_file.filename).suffix.lower()
+                ext_map = {".log": "text/plain", ".txt": "text/plain", ".csv": "text/csv", ".json": "application/json"}
+                content_type = ext_map.get(ext, content_type)
             if content_type not in ALLOWED_MIME_TYPES:
                 raise HTTPException(
                     status_code=400,
