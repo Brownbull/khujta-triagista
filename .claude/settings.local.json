@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tasklist /FO CSV /NH)",
+      "Bash(sort -t',' -k5 -rn)",
+      "Bash(wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value)",
+      "Bash(powershell -File -)"
+    ]
+  }
+}
